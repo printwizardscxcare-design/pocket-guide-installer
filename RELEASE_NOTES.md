@@ -1,6 +1,7 @@
 Game installation now has live progress and a persistent activity history.
 
 - See the current stage, files finished, percentage and elapsed time.
+- See the approximate time left in the current step after a short speed sample; estimates pause during stalls.
 - Track game downloads by bytes, average speed and active transfers, including verified cached files.
 - Watch each file move through download, verification and copying to the card.
 - Review installed files, existing matches, preserved conflicts and failures in the activity tab. Select a row for full details.

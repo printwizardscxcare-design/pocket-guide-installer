@@ -219,3 +219,5 @@ The **Installation activity** tab opens when installation starts. Active files a
 The first progress bar counts files finished in the current step. During game and system downloads, a second bar shows bytes downloaded or found in the verified cache, with average download speed and the number of active transfers. Reaching the end of the download bar can still leave verification and card copying to finish. Items needing attention count as finished attempts and are clearly marked.
 
 Local imports count game files and archives checked. A ZIP may contain several games. **Open report** shows a saved record of file outcomes after installation finishes.
+
+The time estimate appears after a short measurement period and applies to the current step. It uses file progress for core and local imports, and byte progress with an allowance for verification and card writes for downloads. It updates as the speed changes and pauses when no progress is observed. Later steps are estimated when they begin.

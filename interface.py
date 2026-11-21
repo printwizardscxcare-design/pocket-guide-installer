@@ -2,6 +2,7 @@
 
 import contextlib
 import ctypes
+import math
 import os
 import queue
 import shutil
@@ -121,6 +122,7 @@ class Installer:
         self.phase = tk.StringVar(value="Installation progress")
         self.progress_text = tk.StringVar(value="Ready")
         self.transfer_text = tk.StringVar()
+        self.eta = tk.StringVar()
         self.stage_id = None
         self.stage_items = {}
         self.activity_rows = {}
@@ -367,6 +369,9 @@ class Installer:
             footer, textvariable=self.status, bg=BG, fg=MUTED, anchor="w"
         )
         self.status_label.pack(fill="x")
+        tk.Label(
+            footer, textvariable=self.eta, bg=BG, fg=INK, anchor="w", font=(UI_FONT, 9)
+        ).pack(fill="x")
         self.status.set("Ready. Expand a category to choose individual items.")
         self.refresh()
         root.protocol("WM_DELETE_WINDOW", self.close)
@@ -540,6 +545,7 @@ class Installer:
         self.progress.configure(mode="determinate", value=0, maximum=100)
         self.progress_text.set("Preparing…")
         self.phase.set("Checking the card")
+        self.eta.set("Estimating time remaining…")
         self.status.set("Checking the card and preparing downloads…")
         events = self.events
 
@@ -593,6 +599,7 @@ class Installer:
                 self.progress.configure(mode="determinate")
                 self.action.configure(text="Install selection", state="normal")
                 if kind == "done":
+                    self.eta.set("Installation finished")
                     self.progress.configure(value=self.progress["maximum"])
                     issues = len(value.get("needs_attention", []))
                     self.phase.set(
@@ -613,6 +620,7 @@ class Installer:
                         f"Finished. {len(value['processed_cores'])} cores processed, {value['verified_game_and_system_assets']} assets verified, {value['game_files'].get('written', 0)} local game files written. See report for exceptions."
                     )
                 else:
+                    self.eta.set("Time estimate paused")
                     self.status.set(value)
                     self.phase.set(
                         "Stopped safely"
@@ -644,6 +652,9 @@ class Installer:
                 self.network_bytes = 0
             self.stage_id = stage
             self.stage_total = event.get("total")
+            self.estimate_started = time.monotonic()
+            self.last_work = 0
+            self.last_work_at = self.estimate_started
             self.stage_sizes = event.get("sizes", self.stage_sizes)
             titles = {
                 "cores": "Core installation",
@@ -673,7 +684,7 @@ class Installer:
             return
         key = event["key"]
         old = self.stage_items.get(key, {})
-        if event.get("status") == "Downloading":
+        if event.get("status") in ("Downloading", "Verifying download"):
             self.network_bytes += max(
                 0, event.get("received", 0) - old.get("received", 0)
             )
@@ -745,6 +756,69 @@ class Installer:
                 f"Downloaded or cached: {received / 2**20:.1f} / {total / 2**20:.1f} MiB"
                 f"   ·   {speed:.1f} MiB/s average   ·   {active} active"
             )
+            # Leave a small allowance for verification and card writes after bytes arrive.
+            work = sum(
+                self.stage_sizes.get(k, 0)
+                if i.get("finished")
+                else min(i.get("received", 0), self.stage_sizes.get(k, 0)) * 0.95
+                for k, i in self.stage_items.items()
+            )
+            remaining_bytes = sum(
+                max(0, size - self.stage_items.get(key, {}).get("received", 0))
+                for key, size in self.stage_sizes.items()
+                if not self.stage_items.get(key, {}).get("finished")
+            )
+            # Cached bytes never inflate the measured network speed.
+            remaining = (
+                remaining_bytes * duration / self.network_bytes * 1.05
+                if self.network_bytes
+                else None
+            )
+            self.update_estimate(
+                work,
+                total,
+                remaining=remaining,
+                file_rate=False,
+                finishing=not remaining_bytes and finished < self.stage_total,
+            )
+        else:
+            self.update_estimate(finished, self.stage_total)
+
+    def update_estimate(
+        self, work, total, remaining=None, file_rate=True, finishing=False
+    ):
+        now = time.monotonic()
+        if work != self.last_work:
+            self.last_work, self.last_work_at = work, now
+        duration = now - self.estimate_started
+        if self.stop.is_set():
+            text = "Stopping safely…"
+        elif total is not None and work >= total:
+            text = "This step is finished"
+        elif now - self.last_work_at > 20:
+            text = "Waiting for progress · time estimate paused"
+        elif finishing:
+            text = "Finishing verification and card copies…"
+        elif (
+            total
+            and work > 0
+            and duration >= 5
+            and (file_rate or remaining is not None)
+        ):
+            seconds = duration * max(0, total - work) / work if file_rate else remaining
+            if seconds < 60:
+                remaining = "Under a minute"
+            else:
+                minutes = math.ceil(seconds / 60)
+                remaining = (
+                    f"About {minutes} min"
+                    if minutes < 60
+                    else f"About {minutes // 60} hr {minutes % 60} min"
+                )
+            text = f"{remaining} left in this step · approximate"
+        else:
+            text = "Estimating time remaining for this step…"
+        self.eta.set(text)
 
     def open_report(self):
         open_file(self.reportdir / "Install report.txt")

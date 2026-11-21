@@ -234,13 +234,41 @@ def run(report=None):
             {"type": "stage", "stage": "games", "total": 0, "step": 3, "steps": 3}
         )
         assert app.progress["value"] == 100 and len(app.activity.get_children()) == 2
+        # Cached bytes must not make a slow network transfer look almost finished.
+        app.stage_id = "assets"
+        app.stage_total = 2
+        app.stage_sizes = {"cached": 900, "network": 100}
+        app.stage_items = {
+            "cached": {"received": 900, "finished": True},
+            "network": {"received": 10},
+        }
+        app.stage_started = app.estimate_started = 90
+        app.network_bytes = 10
+        with patch.object(interface.time, "monotonic", return_value=100):
+            app.update_metrics()
+            assert "About 2 min left in this step" in app.eta.get()
+            app.network_bytes = 0
+            app.update_metrics()
+            assert "Estimating" in app.eta.get()
+        with patch.object(interface.time, "monotonic", return_value=125):
+            app.update_metrics()
+            assert "paused" in app.eta.get()
+        app.stage_items["network"]["received"] = 100
+        app.network_bytes = 100
+        with patch.object(interface.time, "monotonic", return_value=126):
+            app.update_metrics()
+            assert "Finishing verification" in app.eta.get()
+        app.stage_items["network"]["finished"] = True
+        with patch.object(interface.time, "monotonic", return_value=127):
+            app.update_metrics()
+            assert app.eta.get() == "This step is finished"
         icon = engine.BUNDLE / "assets" / "pocket.png"
         root.iconphoto(True, tk.PhotoImage(file=str(icon)))
         root.update()
         root.destroy()
     if report:
         Path(report).write_text(
-            "PASS — startup, GUI, selection, isolated card writes, Add/Overwrite, save preservation, firmware version check, icon, live download/cached progress, cancellation, conflicts, game import outcomes and activity history.\n",
+            "PASS — startup, GUI, selection, isolated card writes, Add/Overwrite, save preservation, firmware version check, icon, live download/cached progress, cancellation, conflicts, game import outcomes, activity history and time estimates (cache, stalls, verification, finish).\n",
             encoding="utf8",
         )
 

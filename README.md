@@ -14,6 +14,7 @@ Set up your Analogue Pocket from Windows, macOS, or Linux. Choose the openFPGA c
 - Imports compatible loose game files and ZIP members from the card or a folder on your computer.
 - Provides a **Firmware only** button for official Pocket firmware **2.7**.
 - Shows live download sizes and speed, per-stage file counts, and an activity history of downloads, verification, card copies, cached files, and items needing attention.
+- Estimates the time left in the current step from measured progress, pausing the estimate when transfers stall.
 - Saves the file activity in the installation report for later review.
 
 Your physical cartridges still work through **Play Cartridge**. Core and game files are installed into the card's **Assets**, **Cores**, and **Platforms** folders. Selecting firmware prepares an update file at the card root. Saves and Memories are preserved.
