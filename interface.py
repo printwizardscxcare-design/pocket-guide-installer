@@ -207,6 +207,9 @@ class Installer:
         ttk.Button(row, text="Browse", command=self.browse_card).pack(
             side="left", padx=(5, 0)
         )
+        ttk.Button(right, text="Firmware only", command=self.firmware_only).pack(
+            anchor="w", pady=(6, 0)
+        )
         self.card.trace_add("write", lambda *_: self.storage())
         tk.Label(
             right, textvariable=self.card_info, bg=PAPER, fg=MUTED, anchor="w"
@@ -293,6 +296,17 @@ class Installer:
         self.status.set("Ready. Expand a category to choose individual items.")
         self.refresh()
         root.protocol("WM_DELETE_WINDOW", self.close)
+
+    def firmware_only(self):
+        if self.running:
+            return
+        self.search.set("")
+        self.model.selected = {"firmware"}
+        self.import_games.set(False)
+        self.refresh()
+        self.status.set(
+            "Firmware only selected. Click Install selection to prepare the update."
+        )
 
     def storage(self):
         try:

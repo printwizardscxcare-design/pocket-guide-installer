@@ -48,3 +48,6 @@ After completion, safely eject, fully power off the Pocket, then power on with t
 
 Selecting firmware adds the official firmware file to the card root. Cartridge play remains available. Official instructions https://www.analogue.co/support/resource/updating-firmware
 
+
+The Firmware only button selects just the firmware update and turns off local game imports.
+
