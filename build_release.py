@@ -9,7 +9,7 @@ import subprocess
 import sys
 import tarfile
 
-version = sys.argv[1].removeprefix("v") if len(sys.argv) > 1 else "1.2.0"
+version = sys.argv[1].removeprefix("v") if len(sys.argv) > 1 else "1.2.1"
 arch = "arm64" if platform.machine().lower() in ("arm64", "aarch64") else "x64"
 target = (
     "windows"
@@ -134,7 +134,7 @@ else:
     icons.mkdir(parents=True, exist_ok=True)
     from PIL import Image
 
-    Image.open("assets/pocket.png").resize((256, 256)).save(
+    Image.open("assets/pocket.png").resize((256, 256), Image.Resampling.NEAREST).save(
         icons / "pocket-guide-installer.png"
     )
     docs = stage / "usr/share/doc/pocket-guide-installer"

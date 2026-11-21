@@ -1,18 +1,18 @@
 # Installation guide
 
-These instructions cover Pocket Guide Installer **1.2.0**. Download files from the [1.2 release](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/tag/v1.2.0). The repository and release downloads are public. A GitHub account is optional.
+These instructions cover Pocket Guide Installer **1.2.1**. Download files from the [1.2.1 release](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/tag/v1.2.1). The repository and release downloads are public. A GitHub account is optional.
 
 ## Choose your download
 
 | Computer | File |
 | --- | --- |
-| Windows x64 | PocketGuideInstaller-1.2.0-windows-x64.exe |
-| Mac with Apple Silicon | PocketGuideInstaller-1.2.0-macos-arm64.dmg or .zip |
-| Mac with Intel processor | PocketGuideInstaller-1.2.0-macos-x64.dmg or .zip |
-| Debian or Ubuntu x64 | PocketGuideInstaller-1.2.0-linux-x64.deb |
-| Fedora x64 | PocketGuideInstaller-1.2.0-linux-x64.rpm |
-| Arch Linux x64 | PocketGuideInstaller-1.2.0-linux-x64.pkg.tar.gz |
-| Other Linux x64 desktops | PocketGuideInstaller-1.2.0-linux-x64.tar.gz |
+| Windows x64 | PocketGuideInstaller-1.2.1-windows-x64.exe |
+| Mac with Apple Silicon | PocketGuideInstaller-1.2.1-macos-arm64.dmg or .zip |
+| Mac with Intel processor | PocketGuideInstaller-1.2.1-macos-x64.dmg or .zip |
+| Debian or Ubuntu x64 | PocketGuideInstaller-1.2.1-linux-x64.deb |
+| Fedora x64 | PocketGuideInstaller-1.2.1-linux-x64.rpm |
+| Arch Linux x64 | PocketGuideInstaller-1.2.1-linux-x64.pkg.tar.gz |
+| Other Linux x64 desktops | PocketGuideInstaller-1.2.1-linux-x64.tar.gz |
 
 On a Mac, open **Apple menu → About This Mac**. Choose **arm64** if it lists an Apple chip such as M1, M2, M3, or M4. Choose **x64** if it lists an Intel processor. Linux packages and the Windows build target x64 computers.
 
@@ -20,7 +20,7 @@ The **SHA256SUMS.txt** files contain checksums. GitHub's **Source code** ZIP and
 
 ## Windows
 
-1. Download **PocketGuideInstaller-1.2.0-windows-x64.exe** to a local folder such as Downloads.
+1. Download **PocketGuideInstaller-1.2.1-windows-x64.exe** to a local folder such as Downloads.
 2. Double-click the file to open it. The executable runs directly and includes its Python runtime.
 3. Continue with [Connect your Pocket](#connect-your-pocket).
 
@@ -29,7 +29,7 @@ The Windows executable is unsigned, so Windows may ask you to confirm the publis
 To compare its checksum, open PowerShell in Downloads and run the command below. Compare the result with the Windows **SHA256SUMS.txt** file from the same release.
 
 ```powershell
-Get-FileHash .\PocketGuideInstaller-1.2.0-windows-x64.exe -Algorithm SHA256
+Get-FileHash .\PocketGuideInstaller-1.2.1-windows-x64.exe -Algorithm SHA256
 ```
 
 ## macOS
@@ -60,22 +60,22 @@ To verify a DMG or ZIP, download the matching Mac **SHA256SUMS.txt** file into t
 
 ```bash
 # Apple Silicon
-shasum -a 256 -c PocketGuideInstaller-1.2.0-macos-arm64-SHA256SUMS.txt
+shasum -a 256 -c PocketGuideInstaller-1.2.1-macos-arm64-SHA256SUMS.txt
 
 # Intel
-shasum -a 256 -c PocketGuideInstaller-1.2.0-macos-x64-SHA256SUMS.txt
+shasum -a 256 -c PocketGuideInstaller-1.2.1-macos-x64-SHA256SUMS.txt
 ```
 
 The checksum list includes both the DMG and ZIP. A missing-file message for a format you did not download is expected. The file you did download should report **OK**.
 
 ## Debian and Ubuntu
 
-1. Download **PocketGuideInstaller-1.2.0-linux-x64.deb**.
+1. Download **PocketGuideInstaller-1.2.1-linux-x64.deb**.
 2. Open Terminal in the folder containing the download.
 3. Install the package and its dependencies.
 
 ```bash
-sudo apt install ./PocketGuideInstaller-1.2.0-linux-x64.deb
+sudo apt install ./PocketGuideInstaller-1.2.1-linux-x64.deb
 ```
 
 4. Open **Pocket Guide Installer** from your application menu. To launch from Terminal, run the command below as your normal user.
@@ -89,11 +89,11 @@ The package was installed and checked in Debian 13. The desktop build was also c
 
 ## Fedora
 
-1. Download **PocketGuideInstaller-1.2.0-linux-x64.rpm**.
+1. Download **PocketGuideInstaller-1.2.1-linux-x64.rpm**.
 2. Open Terminal in the download folder and install the package.
 
 ```bash
-sudo dnf install ./PocketGuideInstaller-1.2.0-linux-x64.rpm
+sudo dnf install ./PocketGuideInstaller-1.2.1-linux-x64.rpm
 ```
 
 3. Open **Pocket Guide Installer** from your application menu, or run the command below as your normal user.
@@ -107,11 +107,11 @@ The RPM was installed and checked in Fedora 43.
 
 ## Arch Linux
 
-1. Download **PocketGuideInstaller-1.2.0-linux-x64.pkg.tar.gz**.
+1. Download **PocketGuideInstaller-1.2.1-linux-x64.pkg.tar.gz**.
 2. Open Terminal in the download folder and install it with pacman.
 
 ```bash
-sudo pacman -U ./PocketGuideInstaller-1.2.0-linux-x64.pkg.tar.gz
+sudo pacman -U ./PocketGuideInstaller-1.2.1-linux-x64.pkg.tar.gz
 ```
 
 3. Open **Pocket Guide Installer** from your application menu, or run the command below as your normal user.
@@ -125,13 +125,13 @@ The package was installed and checked in the current Arch base container. [Arch 
 
 ## Portable Linux download
 
-1. Download **PocketGuideInstaller-1.2.0-linux-x64.tar.gz**.
+1. Download **PocketGuideInstaller-1.2.1-linux-x64.tar.gz**.
 2. Extract it into its own folder and start the app.
 
 ```bash
-mkdir -p PocketGuideInstaller-1.2.0
-tar -xzf PocketGuideInstaller-1.2.0-linux-x64.tar.gz -C PocketGuideInstaller-1.2.0
-cd PocketGuideInstaller-1.2.0
+mkdir -p PocketGuideInstaller-1.2.1
+tar -xzf PocketGuideInstaller-1.2.1-linux-x64.tar.gz -C PocketGuideInstaller-1.2.1
+cd PocketGuideInstaller-1.2.1
 chmod +x PocketGuideInstaller
 ./PocketGuideInstaller
 ```
@@ -156,7 +156,7 @@ The portable executable is built on Ubuntu 22.04. Compatibility with additional 
 To verify Linux downloads, place the Linux **SHA256SUMS.txt** beside your downloaded packages and run the command below.
 
 ```bash
-sha256sum -c PocketGuideInstaller-1.2.0-linux-x64-SHA256SUMS.txt
+sha256sum -c PocketGuideInstaller-1.2.1-linux-x64-SHA256SUMS.txt
 ```
 
 The list covers all four Linux formats. Missing-file messages for formats you did not download are expected. Check that your downloaded file reports **OK**.

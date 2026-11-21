@@ -1,4 +1,6 @@
-Pocket Guide Installer 1.2 supports Windows, Intel and Apple Silicon macOS, and Linux. It includes the selective core and game checklist, Add and Overwrite modes, and a firmware-only option.
+The Pocket Guide logo now uses an 8-bit Gruvbox design across the executable, Mac app, Linux packages, and project page.
+
+Pocket Guide Installer 1.2.1 supports Windows, Intel and Apple Silicon macOS, and Linux. It includes the selective core and game checklist, Add and Overwrite modes, and a firmware-only option.
 
 ## Start here
 
