@@ -36,6 +36,8 @@ command = [
     "CREDITS.md:.",
     "--add-data",
     "README.md:.",
+    "--add-data",
+    "INSTALL.md:.",
 ]
 if target == "macos":
     command += [
@@ -137,7 +139,7 @@ else:
     )
     docs = stage / "usr/share/doc/pocket-guide-installer"
     docs.mkdir(parents=True, exist_ok=True)
-    for doc in ("README.md", "CREDITS.md"):
+    for doc in ("README.md", "CREDITS.md", "INSTALL.md"):
         shutil.copy2(doc, docs / doc)
     for kind, suffix in (("deb", "deb"), ("rpm", "rpm"), ("pacman", "pkg.tar.gz")):
         cmd = [
@@ -203,7 +205,7 @@ else:
         subprocess.run(cmd, check=True)
     with tarfile.open(out / (name + ".tar.gz"), "w:gz") as archive:
         archive.add(binary, arcname="PocketGuideInstaller")
-        for doc in ("README.md", "CREDITS.md"):
+        for doc in ("README.md", "CREDITS.md", "INSTALL.md"):
             archive.add(doc, arcname=doc)
 files = [p for p in out.iterdir() if p.name.startswith(name)]
 (out / (name + "-SHA256SUMS.txt")).write_text(

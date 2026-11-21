@@ -97,4 +97,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
         run: |
-          gh release create "v$VERSION" artifacts/PocketGuideInstaller-* --target "$GITHUB_SHA" --title "Pocket Guide Installer $VERSION" --notes-file RELEASE_NOTES.md
+          gh release create "v$VERSION" artifacts/PocketGuideInstaller-* INSTALL.md CREDITS.md --target "$GITHUB_SHA" --title "Pocket Guide Installer $VERSION" --notes-file RELEASE_NOTES.md

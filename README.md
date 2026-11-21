@@ -1,75 +1,91 @@
+<p align="center"><img src="assets/pocket.png" width="144" alt="Smiling handheld with a download chip"></p>
+
 # Pocket Guide Installer
 
-A desktop installer for Windows, macOS, and Linux for Analogue Pocket openFPGA cores and games, based on the [Time Extension guide](https://www.timeextension.com/guides/all-analogue-pocket-openfpga-cores-and-where-to-download-them).
+Set up your Analogue Pocket from Windows, macOS, or Linux. Choose the openFPGA cores and game assets you want, import your existing games, or prepare an official firmware update from one checklist.
 
-## Credits
+[Download version 1.2](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/tag/v1.2.0) · [Installation guide](INSTALL.md) · [Full credits](CREDITS.md) · [Get help](https://github.com/printwizardscxcare-design/pocket-guide-installer/issues)
 
-This installer relies on the work of openFPGA developers, port maintainers, and tool authors. The full credits list identifies **89 repositories and every one of the 137 core builds**, including source projects, pinned releases, and GitHub-reported license information. [Read all credits and upstream sources](CREDITS.md).
+## What it does
 
-## Use the installer
+- Offers **137 core builds and 365 indexed game and system files**, organized into a searchable checklist.
+- Starts with everything checked so you can install a full selection or choose individual items.
+- Adds missing files or overwrites matching files, with verification before each replacement.
+- Imports compatible loose game files and ZIP members from the card or a folder on your computer.
+- Provides a **Firmware only** button for official Pocket firmware **2.7**.
+- Shows progress and produces a report of completed work, missing files, and items needing attention.
 
-1. Download the package for your operating system from [the latest release](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/latest).
-2. Connect an initialized Pocket microSD card to your computer. A card reader is fastest. For USB, use **Tools → Developer → USB SD Access** on the Pocket.
-3. Open the installer and check the selected drive. All **137 cores and 365 game and system files** start selected. Expand a category or search for an item. **All** and **None** apply to the visible search results. Selecting a game selects its core. Removing a core removes downloads that depend exclusively on it.
-4. Choose **Add missing files** (default) to keep differing files already on the card. Choose **Overwrite matching files** to replace differing files at selected destinations. Both modes retain unrelated files.
-5. Leave **Import compatible games** selected to unpack games already on the card and optionally import a PC game folder. Click **Install selection**. Use **Stop safely** if you need to interrupt the transfer, then wait for the stopped message before ejecting.
-6. Review the completion report and safely eject the card. On Pocket, select **openFPGA** for installed cores or **Play Cartridge** for physical cartridges.
+Your physical cartridges still work through **Play Cartridge**. Core and game files are installed into the card's **Assets**, **Cores**, and **Platforms** folders. Selecting firmware prepares an update file at the card root. Saves and Memories are preserved.
 
-Core and game installation writes under **Assets**, **Cores**, and **Platforms**. Selecting firmware also places the official firmware update at the card root. Downloaded core archives are pinned with SHA-256. Game and system assets are checked against their archive checksums. Each new or replacement file is verified before it becomes the destination file.
+## Download and install
 
-## What is included
+Choose the package that matches your computer. The linked instructions cover installation and first launch for each format.
 
-The checklist links to developer core releases and indexed game and system assets. The full asset selection is **2.10 GiB**, in addition to core downloads and unpacked local games. Repeated and regional game listings can share a core. Core packages may contain bundled launchers or sample files. Individual game-download checkboxes control separately downloaded assets.
+| Platform | Version 1.2 download | Instructions |
+| --- | --- | --- |
+| Windows x64 | [EXE](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.2.0/PocketGuideInstaller-1.2.0-windows-x64.exe) | [Windows setup](INSTALL.md#windows) |
+| macOS Apple Silicon | [DMG](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.2.0/PocketGuideInstaller-1.2.0-macos-arm64.dmg) · [ZIP](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.2.0/PocketGuideInstaller-1.2.0-macos-arm64.zip) | [Mac setup](INSTALL.md#macos) |
+| macOS Intel | [DMG](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.2.0/PocketGuideInstaller-1.2.0-macos-x64.dmg) · [ZIP](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.2.0/PocketGuideInstaller-1.2.0-macos-x64.zip) | [Mac setup](INSTALL.md#macos) |
+| Debian / Ubuntu x64 | [DEB](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.2.0/PocketGuideInstaller-1.2.0-linux-x64.deb) | [Debian / Ubuntu setup](INSTALL.md#debian-and-ubuntu) |
+| Fedora x64 | [RPM](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.2.0/PocketGuideInstaller-1.2.0-linux-x64.rpm) | [Fedora setup](INSTALL.md#fedora) |
+| Arch Linux x64 | [pkg.tar.gz](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.2.0/PocketGuideInstaller-1.2.0-linux-x64.pkg.tar.gz) | [Arch setup](INSTALL.md#arch-linux) |
+| Linux x64 portable | [tar.gz](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.2.0/PocketGuideInstaller-1.2.0-linux-x64.tar.gz) | [Portable Linux setup](INSTALL.md#portable-linux-download) |
 
-The optional game importer recognizes GB, GBC, GBA, NES, SFC, SMC, MD, GEN, SMD, GG, SMS, PCE, WS, WSC, LNX, A26, and A78 game files. It also recognizes loose Genesis BIN files inside a folder named **genesis**. It handles loose files and supported ZIP members for selected platforms. It keeps the source files.
+Windows builds are unsigned. Mac builds use ad-hoc signing and have not been notarized by Apple. The installation guide explains first-launch prompts. Checksums for every package are on the release page.
 
-The guide lists **Bandit**, **Birdie Try**, and **Ganbare! Marine Kun**. This release has no matched playable download for those three listings. The included Coin-Op Collection builds for **Mortal Kombat**, **NARC**, and **Smash TV** require a publisher license to play. Some systems also need user-supplied games or disc images.
+This repository is currently private. Downloading through GitHub requires repository access. You can also share a downloaded installer file directly.
 
-## Reports and sharing
+## Your first install
 
-**Open report** shows a text summary of the most recent install. This report, a JSON version, and reusable download caches are under **%LOCALAPPDATA%\Pocket Guide Installer** on Windows, **~/Library/Application Support/Pocket Guide Installer** on macOS, or **~/.local/share/pocket-guide-installer** on Linux (respecting XDG_DATA_HOME). Game files, BIOS downloads, and card data are excluded from the standalone executable and repository.
+1. Connect a microSD card already initialized by the Pocket. Use a card reader, or enable **Tools → Developer → USB SD Access** on the connected Pocket.
+2. Open the app and confirm the detected card. Click **Browse** if you need to select it manually.
+3. Adjust the checklist, choose **Add missing files** or **Overwrite matching files**, and optionally choose a folder of your games.
+4. Click **Install selection** and leave the card connected until it finishes.
+5. Open the report, review any exceptions, and safely eject.
 
-People with repository access can use the private release link. You can also share the executable directly. Windows builds are unsigned. Mac builds are ad-hoc signed and are not Apple-notarized.
+The complete indexed asset selection uses about **2.10 GiB**, plus cores and imported games. Downloads are cached on the computer. A card reader is faster for large installations.
 
-## Build from source on Windows
+Firmware is prepared **after** selected cores and games. To apply it, safely eject, fully power off the Pocket, then power on with the card inserted. Allow **3–4 minutes** and keep power on until it restarts. [Firmware-only instructions](INSTALL.md#firmware-only)
 
-Use Python 3.15 x64 with Tk and PyInstaller 6.22.3.
+## Built on the community's work
 
-```powershell
-python -m pip install pyinstaller==6.22.3
-python -m PyInstaller --onefile --windowed --name PocketGuideInstaller --icon "assets/pocket.ico" --add-data "assets:assets" --add-data "manifest.json:." pocket.py
+The FPGA cores, their ports, release catalogs, and existing updater tools make this project possible. Their developers and contributors deserve the credit for the systems and games this installer helps set up.
+
+- **Spiritualized1997, agg23, budude2, Mazamars312, JOTEGO, obsidian-dot-dev, OpenGateware, Coin-Op Collection, and the other developers listed in the full credits** provide the core projects and release builds.
+- **openFPGA Cores Inventory** supplies the core catalog and release metadata. [Catalog repository](https://github.com/openfpga-cores-inventory/analogue-pocket)
+- **Matt Pannella's Pupdate** informed the updater and asset-layout approach. [Pupdate repository](https://github.com/mattpannella/pupdate)
+- **JOTEGO** maintains source cores and Pocket binary distributions. [Source cores](https://github.com/jotego/jtcores) · [Binary releases](https://github.com/jotego/jtbin)
+- **Damien McFerran and Time Extension** created the guide used to select the systems and arcade titles. [Original guide](https://www.timeextension.com/guides/all-analogue-pocket-openfpga-cores-and-where-to-download-them)
+- **Analogue** develops Pocket, Analogue OS, and openFPGA, and publishes the firmware. [Developer documentation](https://www.analogue.co/developer/docs)
+- **Internet Archive and the openFPGA-Files contributors** host the indexed game and system assets. [Collection](https://archive.org/details/openFPGA-Files)
+
+**[Read the complete credits for every core build, source repository, pinned download, and packaging tool.](CREDITS.md)** The credits include GitHub-reported licenses and links to each project's own contributor history and terms.
+
+The app interface and installer code were created for this project. The smiling handheld artwork was generated with OpenAI's image-generation tool. Python, Tcl/Tk, PyInstaller, Pillow, FPM, and GitHub Actions support the desktop builds.
+
+## Availability and testing
+
+The source and packaged app passed automated checks on Windows, Intel Mac, Apple Silicon Mac, and Linux. Linux packages were also installed and checked inside Debian 13, Fedora 43, and Arch containers. Physical Pocket transfers on macOS and Linux still need user testing.
+
+Some arcade builds require a publisher-issued license. The selected **Mortal Kombat**, **NARC**, and **Smash TV** builds have that requirement. **Bandit**, **Birdie Try**, and **Ganbare! Marine Kun** have no matched playable download in this release. Some systems need separately supplied games, BIOS files, or disc images. The completion report lists items requiring attention.
+
+The game importer supports GB, GBC, GBA, NES, SFC, SMC, MD, GEN, SMD, GG, SMS, PCE, WS, WSC, LNX, A26, and A78 files. Loose Genesis BIN files are recognized inside a folder named **genesis**. Supported game files in ZIP archives can be unpacked for selected platforms.
+
+## Reports and support
+
+Use **Open report** after an install. Reports and cached downloads live in the app's data folder on each platform. [Report locations and help](INSTALL.md#reports-and-help)
+
+For a problem report, include your operating system, installer version, download format, and the relevant message from **Install report.txt**. [Open an issue](https://github.com/printwizardscxcare-design/pocket-guide-installer/issues)
+
+## Build from source
+
+Native builds use Python 3.13, PyInstaller 6.22.3, and Pillow 12.0.0. Linux package generation also uses FPM 1.17.0 and the system build tools listed in the workflow.
+
+```bash
+python -m pip install pyinstaller==6.22.3 pillow==12.0.0
+python build_release.py 1.2.0
 ```
 
-The output is **dist/PocketGuideInstaller.exe**. For a full selection from the command line, run **python pocket.py --card E:/ --mode add**. Optional arguments include **--mode overwrite** and **--games "C:/My Games"**. Use the actual card drive.
+Build on the target operating system. The workflow creates Intel and Apple Silicon Mac releases separately. Build outputs and checksums are written to **release/**. [Native build and distribution checks](.github/workflows/desktop.yml)
 
-Core metadata comes from the [openFPGA core inventory](https://openfpga-cores-inventory.github.io/analogue-pocket/) and [JT binary releases](https://github.com/jotego/jtbin). The game and system asset index uses the openFPGA-Files archive referenced by [Pupdate](https://github.com/mattpannella/pupdate).
-
-## Optional firmware update
-
-Firmware 2.7 is available in the checklist and starts selected. It requires confirmation. Cores, downloads, and local game imports run first. Firmware preparation runs last. The installer verifies the official checksum and skips preparation when the device reports 2.7 or newer. Overwrite mode backs up older Pocket update files to the PC.
-
-After completion, safely eject, fully power off the Pocket, then power on with the card inserted. Allow 3-4 minutes and keep power on until it restarts. Choose None, then check Pocket firmware for firmware alone. Command-line runs require --firmware to include firmware.
-
-Selecting firmware adds the official firmware file to the card root. Cartridge play remains available. Official instructions https://www.analogue.co/support/resource/updating-firmware
-
-
-The Firmware only button selects just the firmware update and turns off local game imports.
-
-
-## Platform downloads
-
-| Platform | Download | Install |
-| --- | --- | --- |
-| Windows x64 | EXE | Open the executable |
-| macOS Apple Silicon | arm64 DMG or ZIP | Copy the app to Applications |
-| macOS Intel | x64 DMG or ZIP | Copy the app to Applications |
-| Debian / Ubuntu x64 | DEB | Open with your package manager |
-| Fedora x64 | RPM | Open with your package manager |
-| Arch Linux x64 | pkg.tar.gz | Install with pacman |
-| Linux x64 portable | tar.gz | Extract and run PocketGuideInstaller |
-
-The release workflow builds and checks each platform natively and installs the Linux packages in Debian, Fedora, and Arch containers. Linux portable builds need an X11-compatible desktop and standard X11/font libraries. Intel and Apple Silicon macOS builds are separate. Physical Pocket transfers on macOS and Linux still need user testing.
-
-The workflow supports Python 3.13 and PyInstaller 6.22.3. Build a native release with **python build_release.py 1.2.0** on the corresponding OS. Linux package builds also use FPM. Downloads contain the same checklist and firmware option. Choose the root of the mounted Pocket card when browsing manually.
-
-See the release's **SHA256SUMS** file for each platform's download checksums.
+To run from source, use **python pocket.py** with a Python installation that includes Tk. The command-line entry point accepts **--card**, **--mode add**, **--mode overwrite**, **--games**, and the optional **--firmware** flag. [Source code](pocket.py)
