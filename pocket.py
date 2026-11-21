@@ -2,8 +2,8 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
-import os
 import ntpath
+import os
 import re
 import shutil
 import sys
@@ -199,12 +199,13 @@ def install_core(root, key, archive, overwrite, report):
                 report.append("Kept existing file: " + str(path))
 
 
-def games(root, extra, report, overwrite, platforms):
+def games(root, extra, report, overwrite, platforms, progress=None):
     assets = root / "Assets"
     sources = [assets] + (
         [extra] if extra and extra.resolve() != assets.resolve() else []
     )
     counts = Counter()
+    sources_and_paths = []
     for source in sources:
         on_card = source == assets
         paths = [
@@ -228,8 +229,26 @@ def games(root, extra, report, overwrite, platforms):
                 )
             )
         ]
+        sources_and_paths.append((source, on_card, paths))
+    total = sum(len(paths) for _, _, paths in sources_and_paths)
+    if progress:
+        progress({"type": "stage", "stage": "games", "total": total})
+    for source, on_card, paths in sources_and_paths:
         for idx, path in enumerate(paths, 1):
             checkpoint()
+            before = counts.copy()
+            issue_count = len(report)
+            if progress:
+                progress(
+                    {
+                        "type": "item",
+                        "stage": "games",
+                        "key": str(path),
+                        "status": "Checking game archive"
+                        if path.suffix.lower() == ".zip"
+                        else "Importing game",
+                    }
+                )
             try:
 
                 def place(name, data):
@@ -277,6 +296,16 @@ def games(root, extra, report, overwrite, platforms):
                     dest = output_path(
                         root, ["Assets", platform, "common"] + sub + [filename]
                     )
+                    if progress:
+                        progress(
+                            {
+                                "type": "item",
+                                "stage": "games",
+                                "key": str(path),
+                                "status": "Copying game to card",
+                                "detail": filename,
+                            }
+                        )
                     state = write_verified(dest, data, overwrite)
                     counts[state] += 1
                     if state == "conflict":
@@ -301,6 +330,31 @@ def games(root, extra, report, overwrite, platforms):
                 if not (root / "Analogue_Pocket.json").exists():
                     raise OSError("Pocket disconnected") from e
                 report.append(str(path) + ": " + str(e))
+            if progress:
+                written = counts["written"] - before["written"]
+                present = counts["present"] - before["present"]
+                attention = len(report) > issue_count
+                status = (
+                    "Needs attention"
+                    if attention
+                    else "Imported"
+                    if written
+                    else "Already on card"
+                    if present
+                    else "No compatible games"
+                )
+                progress(
+                    {
+                        "type": "item",
+                        "stage": "games",
+                        "key": str(path),
+                        "status": status,
+                        "finished": True,
+                        "error": attention,
+                        "detail": f"{written} written, {present} already matched"
+                        + (" · " + report[-1] if attention else ""),
+                    }
+                )
             if idx % 250 == 0:
                 print("Game archives checked", idx, "of", len(paths), flush=True)
     return dict(counts)
@@ -366,7 +420,14 @@ def prepare_firmware(root, overwrite):
 
 
 def install(
-    card, game_folder, mode, core_ids, asset_ids, import_games=True, firmware=False
+    card,
+    game_folder,
+    mode,
+    core_ids,
+    asset_ids,
+    import_games=True,
+    firmware=False,
+    progress=None,
 ):
     root = Path(card).absolute()
     overwrite = mode == "overwrite"
@@ -388,9 +449,49 @@ def install(
     CACHE.mkdir(parents=True, exist_ok=True)
     report = []
     installed = []
+    activity = []
+    stages = [
+        name
+        for name, enabled in (
+            ("cores", core_ids),
+            ("assets", asset_ids),
+            ("games", import_games),
+            ("firmware", firmware),
+        )
+        if enabled
+    ]
+
+    def emit(event):
+        if event.get("finished"):
+            activity.append(event.copy())
+        if progress:
+            progress(event)
+
+    def stage(name, total=None, **values):
+        emit(
+            {
+                "type": "stage",
+                "stage": name,
+                "total": total,
+                "step": stages.index(name) + 1,
+                "steps": len(stages),
+                **values,
+            }
+        )
+
+    if core_ids:
+        stage("cores", len(core_ids))
+
+    def fetch_core(item):
+        key = item[0]
+        emit(
+            {"type": "item", "stage": "cores", "key": key, "status": "Downloading core"}
+        )
+        return fetch(item)
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         futures = {
-            pool.submit(fetch, item): item[0]
+            pool.submit(fetch_core, item): item[0]
             for item in CAT["packages"].items()
             if item[0] in core_ids
         }
@@ -399,30 +500,87 @@ def install(
             key = futures[future]
             try:
                 key, file = future.result()
+                emit(
+                    {
+                        "type": "item",
+                        "stage": "cores",
+                        "key": key,
+                        "status": "Installing core",
+                    }
+                )
+                before_issues = len(report)
                 install_core(root, key, file, overwrite, report)
                 installed.append(key)
+                emit(
+                    {
+                        "type": "item",
+                        "stage": "cores",
+                        "key": key,
+                        "status": "Existing files kept"
+                        if len(report) > before_issues
+                        else "Core installed",
+                        "detail": f"{len(report) - before_issues} files to review"
+                        if len(report) > before_issues
+                        else "",
+                        "finished": True,
+                        "error": len(report) > before_issues,
+                    }
+                )
                 print("Processed", key, flush=True)
             except Exception as e:
                 if not (root / "Analogue_Pocket.json").exists():
                     raise OSError("Pocket disconnected") from e
                 report.append(key + ": " + str(e))
+                emit(
+                    {
+                        "type": "item",
+                        "stage": "cores",
+                        "key": key,
+                        "status": "Needs attention",
+                        "detail": str(e),
+                        "finished": True,
+                        "error": True,
+                    }
+                )
                 print("Skipped", key, e, flush=True)
     print("Installing game and system assets...", flush=True)
 
     def copy_asset(name, local):
         dest = output_path(root, name.split("/"))
-        if write_verified(dest, local.read_bytes(), overwrite) == "conflict":
+        state = write_verified(dest, local.read_bytes(), overwrite)
+        if state == "conflict":
             raise ValueError("Existing different file preserved")
+        return state
 
+    plan = {
+        i: CAT["assets"][i]
+        for i in asset_ids
+        if set(CAT["asset_info"][i]["owners"]).intersection(installed)
+    }
+    if asset_ids:
+        stage(
+            "assets", len(asset_ids), sizes={i: CAT["assets"][i][2] for i in asset_ids}
+        )
+        for name in asset_ids - plan.keys():
+            emit(
+                {
+                    "type": "item",
+                    "stage": "assets",
+                    "key": name,
+                    "status": "Needs attention",
+                    "detail": "Required core was not installed",
+                    "size": CAT["assets"][name][2],
+                    "finished": True,
+                    "error": True,
+                }
+            )
+            report.append(name + ": required core was not installed")
     asset_count, issues = downloads.transfer(
-        {
-            i: CAT["assets"][i]
-            for i in asset_ids
-            if set(CAT["asset_info"][i]["owners"]).intersection(installed)
-        },
+        plan,
         CACHE.parent / "Assets",
         copy_asset,
         STOP,
+        emit,
     )
     report.extend(issues)
     for core in set(CAT["licenses"]).intersection(installed):
@@ -435,8 +593,12 @@ def install(
             report.append("Additional game or system file: " + name)
     checkpoint()
     print("Installing games...", flush=True)
+    if import_games:
+        stage("games", detail="Finding compatible game files…")
     counts = (
-        games(root, game_folder, report, overwrite, platforms) if import_games else {}
+        games(root, game_folder, report, overwrite, platforms, emit)
+        if import_games
+        else {}
     )
     for r in CAT["rows"]:
         if set(r["cores"]).intersection(core_ids) and not set(r["cores"]).intersection(
@@ -446,11 +608,33 @@ def install(
     checkpoint()
     firmware_status = "Firmware update was not selected."
     if firmware:
+        stage("firmware", 1)
+        emit(
+            {
+                "type": "item",
+                "stage": "firmware",
+                "key": "firmware",
+                "status": "Preparing firmware 2.7",
+            }
+        )
         try:
             firmware_status = prepare_firmware(root, overwrite)
         except Exception as exc:
             firmware_status = "Firmware preparation failed: " + str(exc)
             report.append(firmware_status)
+        emit(
+            {
+                "type": "item",
+                "stage": "firmware",
+                "key": "firmware",
+                "status": "Needs attention"
+                if firmware_status.startswith("Firmware preparation failed")
+                else "Firmware checked",
+                "detail": firmware_status,
+                "finished": True,
+                "error": firmware_status.startswith("Firmware preparation failed"),
+            }
+        )
     result = {
         "firmware": firmware_status,
         "unavailable_guide_games": CAT["unavailable_games"],
@@ -460,6 +644,7 @@ def install(
         "verified_game_and_system_assets": asset_count,
         "game_files": counts,
         "needs_attention": report,
+        "activity": activity,
     }
     out = CACHE.parent / "Last install.json"
     out.write_text(json.dumps(result, indent=2), encoding="utf8")
@@ -481,6 +666,13 @@ def install(
         "",
         "Processed cores",
         *sorted(installed),
+        "",
+        "File activity",
+        *(
+            f"{item['status']}: {item['key']}"
+            + (" — " + item["detail"] if item.get("detail") else "")
+            for item in activity
+        ),
     ]
     (CACHE.parent / "Install report.txt").write_text(
         "\n".join(lines), encoding="utf-8-sig"

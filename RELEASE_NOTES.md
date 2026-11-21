@@ -1,6 +1,15 @@
+Game installation now has live progress and a persistent activity history.
+
+- See the current stage, files finished, percentage and elapsed time.
+- Track game downloads by bytes, average speed and active transfers, including verified cached files.
+- Watch each file move through download, verification and copying to the card.
+- Review installed files, existing matches, preserved conflicts and failures in the activity tab. Select a row for full details.
+- Local game imports show archives checked and the game being copied.
+- File outcomes are saved in both installation reports. Stop safely also interrupts active downloads between chunks.
+
 The Pocket Guide logo now uses an 8-bit Gruvbox design across the executable, Mac app, Linux packages, and project page.
 
-Pocket Guide Installer 1.2.1 supports Windows, Intel and Apple Silicon macOS, and Linux. It includes the selective core and game checklist, Add and Overwrite modes, and a firmware-only option.
+Pocket Guide Installer 1.3.0 supports Windows, Intel and Apple Silicon macOS, and Linux. It includes the selective core and game checklist, Add and Overwrite modes, and a firmware-only option.
 
 ## Start here
 

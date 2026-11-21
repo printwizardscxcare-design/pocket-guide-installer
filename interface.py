@@ -2,15 +2,17 @@
 
 import contextlib
 import ctypes
-from platform_utils import detected_cards, open_file
 import os
 import queue
 import shutil
 import sys
 import threading
+import time
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
+
+from platform_utils import detected_cards, open_file
 
 BG = "#f1f2ee"
 PAPER = "#ffffff"
@@ -81,8 +83,8 @@ class Installer:
         self.events = queue.Queue()
         self.running = False
         root.title("Pocket Guide Installer")
-        root.geometry("1000x690")
-        root.minsize(820, 590)
+        root.geometry("1080x780")
+        root.minsize(860, 680)
         root.configure(bg=BG)
         self.style = ttk.Style(root)
         self.style.theme_use("clam")
@@ -116,6 +118,15 @@ class Installer:
         self.search = tk.StringVar()
         self.summary = tk.StringVar()
         self.status = tk.StringVar()
+        self.phase = tk.StringVar(value="Installation progress")
+        self.progress_text = tk.StringVar(value="Ready")
+        self.transfer_text = tk.StringVar()
+        self.stage_id = None
+        self.stage_items = {}
+        self.activity_rows = {}
+        self.stage_total = 0
+        self.stage_sizes = {}
+        self.started_at = None
         self.card_info = tk.StringVar()
         self.groups = {}
         self.expanded = set()
@@ -166,8 +177,10 @@ class Installer:
             ttk.Button(
                 top, text=text, width=5, command=lambda v=value: self.bulk(v)
             ).pack(side="left", padx=(4, 0))
-        table = tk.Frame(left, bg=PAPER)
-        table.pack(fill="both", expand=True)
+        self.tabs = ttk.Notebook(left)
+        self.tabs.pack(fill="both", expand=True)
+        table = tk.Frame(self.tabs, bg=PAPER)
+        self.tabs.add(table, text="Choose items")
         self.tree = ttk.Treeview(
             table, columns=("detail",), show="tree headings", selectmode="browse"
         )
@@ -182,6 +195,47 @@ class Installer:
         self.tree.bind("<ButtonRelease-1>", self.click)
         self.tree.bind("<space>", self.keyboard)
         self.search.trace_add("write", lambda *_: self.refresh())
+        activity = tk.Frame(self.tabs, bg=PAPER)
+        self.tabs.add(activity, text="Installation activity")
+        tk.Label(
+            activity,
+            text="Active files appear first. Finished work stays below.",
+            bg=PAPER,
+            fg=MUTED,
+            anchor="w",
+            font=(UI_FONT, 9),
+        ).pack(fill="x", pady=6)
+        activity_table = tk.Frame(activity, bg=PAPER)
+        activity_table.pack(fill="both", expand=True)
+        self.activity = ttk.Treeview(
+            activity_table, columns=("state", "detail"), show="tree headings"
+        )
+        self.activity.heading("#0", text="Game, core or file", anchor="w")
+        self.activity.heading("state", text="Status", anchor="w")
+        self.activity.heading("detail", text="Details", anchor="w")
+        self.activity.column("#0", width=240, minwidth=130)
+        self.activity.column("state", width=155, minwidth=100)
+        self.activity.column("detail", width=230, minwidth=100)
+        activity_scroll = ttk.Scrollbar(activity_table, command=self.activity.yview)
+        self.activity.configure(yscrollcommand=activity_scroll.set)
+        activity_scroll.pack(side="right", fill="y")
+        self.activity.pack(fill="both", expand=True)
+        self.activity_detail = tk.StringVar(
+            value="Select a file to see its full details."
+        )
+        tk.Label(
+            activity,
+            textvariable=self.activity_detail,
+            bg=PAPER,
+            fg=MUTED,
+            anchor="w",
+            justify="left",
+            wraplength=650,
+            font=(UI_FONT, 9),
+        ).pack(fill="x", pady=(6, 0))
+        self.activity.bind("<<TreeviewSelect>>", self.show_activity_detail)
+        self.activity.tag_configure("finished", foreground=GREEN)
+        self.activity.tag_configure("attention", foreground="#a33c21")
 
         def section(text):
             label(right, text, 12, True).pack(fill="x", pady=(10, 4))
@@ -278,11 +332,41 @@ class Installer:
         self.report_button = ttk.Button(
             bar, text="Open report", command=self.open_report
         )
-        self.progress = ttk.Progressbar(footer, mode="determinate")
+        progress_heading = tk.Frame(footer, bg=BG)
+        progress_heading.pack(fill="x", pady=(9, 0))
+        tk.Label(
+            progress_heading,
+            textvariable=self.phase,
+            bg=BG,
+            fg=INK,
+            font=(UI_FONT, 10, "bold"),
+        ).pack(side="left")
+        tk.Label(
+            progress_heading,
+            textvariable=self.progress_text,
+            bg=BG,
+            fg=INK,
+            font=(UI_FONT, 10),
+        ).pack(side="right")
+        self.progress = ttk.Progressbar(footer, mode="determinate", maximum=100)
         self.progress.pack(fill="x", pady=(7, 3))
-        tk.Label(footer, textvariable=self.status, bg=BG, fg=MUTED, anchor="w").pack(
-            fill="x"
+        self.transfer_panel = tk.Frame(footer, bg=BG)
+        self.byte_progress = ttk.Progressbar(
+            self.transfer_panel, mode="determinate", maximum=100
         )
+        self.byte_progress.pack(fill="x", pady=(2, 3))
+        tk.Label(
+            self.transfer_panel,
+            textvariable=self.transfer_text,
+            bg=BG,
+            fg=MUTED,
+            anchor="w",
+            font=(UI_FONT, 9),
+        ).pack(fill="x")
+        self.status_label = tk.Label(
+            footer, textvariable=self.status, bg=BG, fg=MUTED, anchor="w"
+        )
+        self.status_label.pack(fill="x")
         self.status.set("Ready. Expand a category to choose individual items.")
         self.refresh()
         root.protocol("WM_DELETE_WINDOW", self.close)
@@ -443,13 +527,19 @@ class Installer:
             firmware,
         )
         self.running = True
+        self.started_at = time.monotonic()
+        self.stage_id = None
+        self.stage_items = {}
+        self.activity_rows = {}
+        self.activity.delete(*self.activity.get_children())
+        self.activity_detail.set("Select a file to see its full details.")
+        self.tabs.select(1)
         self.stop.clear()
         self.action.configure(text="Stop safely")
         self.report_button.pack_forget()
-        self.progress.configure(
-            mode="determinate", value=0, maximum=max(1, len(cores) + len(assets))
-        )
-        self.core_count = 0
+        self.progress.configure(mode="determinate", value=0, maximum=100)
+        self.progress_text.set("Preparing…")
+        self.phase.set("Checking the card")
         self.status.set("Checking the card and preparing downloads…")
         events = self.events
 
@@ -469,7 +559,9 @@ class Installer:
         def run():
             try:
                 with contextlib.redirect_stdout(Log()):
-                    result = self.install(*args)
+                    result = self.install(
+                        *args, progress=lambda event: events.put(("progress", event))
+                    )
                 events.put(("done", result))
             except BaseException as e:
                 events.put(
@@ -485,20 +577,16 @@ class Installer:
         self.root.after(80, self.poll)
 
     def poll(self):
-        while not self.events.empty():
+        # Keep the window responsive even when several downloads finish together.
+        for _ in range(300):
+            if self.events.empty():
+                break
             kind, value = self.events.get_nowait()
-            if kind == "log":
-                self.status.set(value)
-                if value.startswith(("Processed ", "Skipped ")):
-                    self.core_count += 1
-                    self.progress.configure(value=self.core_count)
-                if value.startswith("Verified game and system assets:"):
-                    self.progress.configure(
-                        value=self.core_count + int(value.split(":")[1].split("/")[0])
-                    )
-                if value.startswith("Installing games..."):
-                    self.progress.configure(mode="indeterminate")
-                    self.progress.start()
+            if kind == "progress":
+                self.show_progress(value)
+            elif kind == "log":
+                if self.stage_id is None:
+                    self.status.set(value)
             else:
                 self.running = False
                 self.progress.stop()
@@ -506,6 +594,15 @@ class Installer:
                 self.action.configure(text="Install selection", state="normal")
                 if kind == "done":
                     self.progress.configure(value=self.progress["maximum"])
+                    issues = len(value.get("needs_attention", []))
+                    self.phase.set(
+                        "Finished"
+                        if not issues
+                        else "Finished · some items need attention"
+                    )
+                    self.progress_text.set(
+                        f"{issues} items to review" if issues else "All tasks finished"
+                    )
                     if (
                         value.get("firmware")
                         and "not selected" not in value["firmware"]
@@ -517,8 +614,137 @@ class Installer:
                     )
                 else:
                     self.status.set(value)
+                    self.phase.set(
+                        "Stopped safely"
+                        if self.stop.is_set()
+                        else "Installation interrupted"
+                    )
+                    for row in self.activity.get_children():
+                        if not self.activity.item(row, "tags"):
+                            values = self.activity.item(row, "values")
+                            self.activity.item(
+                                row,
+                                values=(
+                                    "Stopped" if self.stop.is_set() else "Interrupted",
+                                    values[1],
+                                ),
+                            )
                 return
+        if self.stage_id:
+            self.update_metrics()
         self.root.after(100, self.poll)
+
+    def show_progress(self, event):
+        stage = event["stage"]
+        if event["type"] == "stage":
+            if stage != self.stage_id:
+                self.stage_items = {}
+                self.stage_sizes = {}
+                self.stage_started = time.monotonic()
+                self.network_bytes = 0
+            self.stage_id = stage
+            self.stage_total = event.get("total")
+            self.stage_sizes = event.get("sizes", self.stage_sizes)
+            titles = {
+                "cores": "Core installation",
+                "assets": "Game and system files",
+                "games": "Importing your games",
+                "firmware": "Pocket firmware",
+            }
+            if "step" in event:
+                self.phase.set(
+                    f"Step {event['step']} of {event['steps']} · {titles[stage]}"
+                )
+            self.progress.stop()
+            self.progress.configure(
+                mode="indeterminate" if self.stage_total is None else "determinate",
+                value=0,
+            )
+            if self.stage_total is None:
+                self.progress.start()
+            if stage == "assets":
+                self.transfer_panel.pack(fill="x", before=self.status_label)
+            else:
+                self.transfer_panel.pack_forget()
+            self.status.set(event.get("detail", "Preparing files…"))
+            self.update_metrics()
+            return
+        if stage != self.stage_id:
+            return
+        key = event["key"]
+        old = self.stage_items.get(key, {})
+        if event.get("status") == "Downloading":
+            self.network_bytes += max(
+                0, event.get("received", 0) - old.get("received", 0)
+            )
+        item = {**old, **event}
+        self.stage_items[key] = item
+        meta = self.cat["asset_info"].get(key) or self.cat["core_info"].get(key) or {}
+        name = meta.get(
+            "name", "Official firmware 2.7" if key == "firmware" else Path(key).name
+        )
+        detail = item.get("detail", "")
+        if stage == "assets":
+            received, size = item.get("received", 0), item.get("size", 0)
+            if not item.get("finished") and size:
+                detail = f"{received / 2**20:.1f} / {size / 2**20:.1f} MiB · {key}"
+            elif not detail:
+                detail = key
+        tags = (
+            ("attention",)
+            if item.get("error")
+            else ("finished",)
+            if item.get("finished")
+            else ()
+        )
+        row_key = (stage, key)
+        if row_key not in self.activity_rows:
+            self.activity_rows[row_key] = self.activity.insert("", 0, text=name)
+        row = self.activity_rows[row_key]
+        self.activity.item(row, values=(item["status"], detail), tags=tags)
+        if item.get("finished") and not old.get("finished"):
+            self.activity.move(row, "", "end")
+        if not self.stop.is_set():
+            self.status.set(f"{item['status']} · {name}")
+        self.update_metrics()
+
+    def show_activity_detail(self, _event=None):
+        selected = self.activity.selection()
+        if selected:
+            item = self.activity.item(selected[0])
+            self.activity_detail.set(
+                f"{item['text']} · {item['values'][0]}\n{item['values'][1]}"
+            )
+
+    def update_metrics(self):
+        items = list(self.stage_items.values())
+        finished = sum(bool(i.get("finished")) for i in items)
+        errors = sum(bool(i.get("error")) for i in items)
+        active = sum(not i.get("finished", False) for i in items)
+        elapsed = int(time.monotonic() - self.started_at) if self.started_at else 0
+        clock = f"{elapsed // 60}:{elapsed % 60:02d} elapsed"
+        if self.stage_total is None:
+            self.progress_text.set(f"Finding game files · {clock}")
+        else:
+            percent = 100 * finished / self.stage_total if self.stage_total else 100
+            self.progress.configure(value=percent)
+            self.progress_text.set(
+                f"{finished} / {self.stage_total} files finished · {percent:.0f}% · {clock}"
+                + (f" · {errors} to review" if errors else "")
+            )
+        if self.stage_id == "assets":
+            total = sum(self.stage_sizes.values())
+            received = sum(
+                min(i.get("received", 0), self.stage_sizes.get(k, 0))
+                for k, i in self.stage_items.items()
+            )
+            self.byte_progress.configure(value=100 * received / total if total else 100)
+            duration = max(0.1, time.monotonic() - self.stage_started)
+            speed = self.network_bytes / duration / 2**20
+            self.transfer_text.set(
+                f"Downloaded or cached: {received / 2**20:.1f} / {total / 2**20:.1f} MiB"
+                f"   ·   {speed:.1f} MiB/s average   ·   {active} active"
+            )
 
     def open_report(self):
         open_file(self.reportdir / "Install report.txt")
