@@ -33,7 +33,7 @@ Use Python 3.15 x64 with Tk and PyInstaller 6.22.3.
 
 ```powershell
 python -m pip install pyinstaller==6.22.3
-python -m PyInstaller --onefile --windowed --name PocketGuideInstaller --add-data "manifest.json:." pocket.py
+python -m PyInstaller --onefile --windowed --name PocketGuideInstaller --icon "assets/pocket.ico" --add-data "assets:assets" --add-data "manifest.json:." pocket.py
 ```
 
 The output is **dist/PocketGuideInstaller.exe**. For a full selection from the command line, run **python pocket.py --card E:/ --mode add**. Optional arguments include **--mode overwrite** and **--games "C:/My Games"**. Use the actual card drive.

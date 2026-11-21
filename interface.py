@@ -5,6 +5,7 @@ import ctypes
 import os
 import queue
 import shutil
+import sys
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -552,5 +553,8 @@ def launch(catalog, install, stop, reportdir):
     except OSError:
         pass
     root = tk.Tk()
+    icon = Path(getattr(sys, "_MEIPASS", Path(__file__).parent)) / "assets" / "pocket.ico"
+    if icon.is_file():
+        root.iconbitmap(str(icon))
     Installer(root, catalog, install, stop, reportdir)
     root.mainloop()
