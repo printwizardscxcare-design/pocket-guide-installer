@@ -33,7 +33,7 @@ Choose the package that matches your computer. The linked instructions cover ins
 
 Windows builds are unsigned. Mac builds use ad-hoc signing and have not been notarized by Apple. The installation guide explains first-launch prompts. Checksums for every package are on the release page.
 
-This repository is currently private. Downloading through GitHub requires repository access. You can also share a downloaded installer file directly.
+This repository is public. Anyone can view the project and download a release without a GitHub account. You can share the project page, release link, or a downloaded installer file directly.
 
 ## Your first install
 

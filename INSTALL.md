@@ -1,6 +1,6 @@
 # Installation guide
 
-These instructions cover Pocket Guide Installer **1.2.0**. Download files from the [1.2 release](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/tag/v1.2.0). Access to the private repository is required to download through GitHub.
+These instructions cover Pocket Guide Installer **1.2.0**. Download files from the [1.2 release](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/tag/v1.2.0). The repository and release downloads are public. A GitHub account is optional.
 
 ## Choose your download
 
