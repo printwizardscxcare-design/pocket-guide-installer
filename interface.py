@@ -1,7 +1,8 @@
-"""Windows desktop setup and selective installation."""
+"""Desktop setup and selective installation."""
 
 import contextlib
 import ctypes
+from platform_utils import detected_cards, open_file
 import os
 import queue
 import shutil
@@ -17,6 +18,11 @@ INK = "#182420"
 MUTED = "#52645c"
 GREEN = "#175c45"
 LINE = "#cad3ca"
+UI_FONT = (
+    "Segoe UI"
+    if sys.platform == "win32"
+    else ("Helvetica" if sys.platform == "darwin" else "DejaVu Sans")
+)
 
 
 class Checklist:
@@ -64,23 +70,6 @@ class Checklist:
                     self.selected.discard(name)
 
 
-def detected_cards():
-    found = []
-    mask = ctypes.windll.kernel32.GetLogicalDrives()
-    for i in range(26):
-        if not mask & (1 << i):
-            continue
-        drive = Path(chr(65 + i) + ":/")
-        if ctypes.windll.kernel32.GetDriveTypeW(str(drive)) not in (2, 3):
-            continue
-        try:
-            if (drive / "Analogue_Pocket.json").is_file():
-                found.append(str(drive))
-        except OSError:
-            pass
-    return found
-
-
 class Installer:
     def __init__(self, root, catalog, install, stop, reportdir):
         self.root = root
@@ -99,7 +88,7 @@ class Installer:
         self.style.theme_use("clam")
         self.style.configure(
             "Treeview",
-            font=("Segoe UI", 10),
+            font=(UI_FONT, 10),
             rowheight=28,
             background=PAPER,
             fieldbackground=PAPER,
@@ -108,7 +97,7 @@ class Installer:
         )
         self.style.configure(
             "Treeview.Heading",
-            font=("Segoe UI", 9, "bold"),
+            font=(UI_FONT, 9, "bold"),
             background=BG,
             foreground=MUTED,
         )
@@ -135,14 +124,14 @@ class Installer:
         tk.Label(
             head,
             text="Pocket Guide Installer",
-            font=("Segoe UI", 22, "bold"),
+            font=(UI_FONT, 22, "bold"),
             fg=PAPER,
             bg=INK,
         ).pack(side="left", padx=22, pady=13)
         tk.Label(
             head,
             text="openFPGA  /  microSD setup",
-            font=("Segoe UI", 10),
+            font=(UI_FONT, 10),
             fg="#c4d7c9",
             bg=INK,
         ).pack(side="right", padx=22)
@@ -160,7 +149,7 @@ class Installer:
             return tk.Label(
                 parent,
                 text=text,
-                font=("Segoe UI", size, "bold" if bold else "normal"),
+                font=(UI_FONT, size, "bold" if bold else "normal"),
                 fg=INK,
                 bg=PAPER,
                 anchor="w",
@@ -237,7 +226,7 @@ class Installer:
                 fg=INK,
                 activebackground=PAPER,
                 selectcolor=PAPER,
-                font=("Segoe UI", 10, "bold"),
+                font=(UI_FONT, 10, "bold"),
             ).pack(anchor="w")
             label(right, detail, 9).pack(anchor="w", padx=22)
         section("Your game files")
@@ -247,7 +236,7 @@ class Installer:
             variable=self.import_games,
             bg=PAPER,
             activebackground=PAPER,
-            font=("Segoe UI", 10),
+            font=(UI_FONT, 10),
             fg=INK,
         ).pack(anchor="w")
         label(right, "Scan the card and an optional PC folder.", 9).pack(anchor="w")
@@ -261,7 +250,7 @@ class Installer:
             wraplength=238,
             justify="left",
             anchor="w",
-            font=("Segoe UI", 10),
+            font=(UI_FONT, 10),
             bg=PAPER,
             fg=MUTED,
         ).pack(fill="x", pady=(16, 0))
@@ -270,7 +259,7 @@ class Installer:
         bar = tk.Frame(footer, bg=BG)
         bar.pack(fill="x")
         tk.Label(
-            bar, textvariable=self.summary, fg=INK, bg=BG, font=("Segoe UI", 11, "bold")
+            bar, textvariable=self.summary, fg=INK, bg=BG, font=(UI_FONT, 11, "bold")
         ).pack(side="left")
         self.action = tk.Button(
             bar,
@@ -283,7 +272,7 @@ class Installer:
             relief="flat",
             padx=18,
             pady=5,
-            font=("Segoe UI", 10, "bold"),
+            font=(UI_FONT, 10, "bold"),
         )
         self.action.pack(side="right")
         self.report_button = ttk.Button(
@@ -373,9 +362,7 @@ class Installer:
                     text=("☑  " if k in self.model.selected else "☐  ") + name,
                     values=(detail,),
                 )
-        self.tree.tag_configure(
-            "group", font=("Segoe UI", 10, "bold"), foreground=GREEN
-        )
+        self.tree.tag_configure("group", font=(UI_FONT, 10, "bold"), foreground=GREEN)
         cores = self.model.selected.intersection(self.cat["packages"])
         assets = self.model.selected.intersection(self.cat["assets"])
         size = sum(self.cat["assets"][i][2] for i in assets)
@@ -534,7 +521,7 @@ class Installer:
         self.root.after(100, self.poll)
 
     def open_report(self):
-        os.startfile(self.reportdir / "Install report.txt")
+        open_file(self.reportdir / "Install report.txt")
 
     def close(self):
         if self.running:
@@ -548,13 +535,19 @@ class Installer:
 
 
 def launch(catalog, install, stop, reportdir):
-    try:
-        ctypes.windll.shcore.SetProcessDpiAwareness(1)
-    except OSError:
-        pass
+    if sys.platform == "win32":
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except OSError:
+            pass
     root = tk.Tk()
-    icon = Path(getattr(sys, "_MEIPASS", Path(__file__).parent)) / "assets" / "pocket.ico"
-    if icon.is_file():
+    icon = (
+        Path(getattr(sys, "_MEIPASS", Path(__file__).parent)) / "assets" / "pocket.ico"
+    )
+    if sys.platform == "win32" and icon.is_file():
         root.iconbitmap(str(icon))
+    else:
+        root.app_icon = tk.PhotoImage(file=str(icon.with_suffix(".png")))
+        root.iconphoto(True, root.app_icon)
     Installer(root, catalog, install, stop, reportdir)
     root.mainloop()

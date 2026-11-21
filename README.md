@@ -1,6 +1,6 @@
 # Pocket Guide Installer
 
-A standalone Windows x64 installer for Analogue Pocket openFPGA cores and games, based on the [Time Extension guide](https://www.timeextension.com/guides/all-analogue-pocket-openfpga-cores-and-where-to-download-them).
+A desktop installer for Windows, macOS, and Linux for Analogue Pocket openFPGA cores and games, based on the [Time Extension guide](https://www.timeextension.com/guides/all-analogue-pocket-openfpga-cores-and-where-to-download-them).
 
 ## Credits
 
@@ -8,8 +8,8 @@ This installer relies on the work of openFPGA developers, port maintainers, and 
 
 ## Use the installer
 
-1. Download **PocketGuideInstaller.exe** from [the latest release](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/latest).
-2. Connect an initialized Pocket microSD card to your PC. A card reader is fastest. For USB, use **Tools → Developer → USB SD Access** on the Pocket.
+1. Download the package for your operating system from [the latest release](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/latest).
+2. Connect an initialized Pocket microSD card to your computer. A card reader is fastest. For USB, use **Tools → Developer → USB SD Access** on the Pocket.
 3. Open the installer and check the selected drive. All **137 cores and 365 game and system files** start selected. Expand a category or search for an item. **All** and **None** apply to the visible search results. Selecting a game selects its core. Removing a core removes downloads that depend exclusively on it.
 4. Choose **Add missing files** (default) to keep differing files already on the card. Choose **Overwrite matching files** to replace differing files at selected destinations. Both modes retain unrelated files.
 5. Leave **Import compatible games** selected to unpack games already on the card and optionally import a PC game folder. Click **Install selection**. Use **Stop safely** if you need to interrupt the transfer, then wait for the stopped message before ejecting.
@@ -27,9 +27,9 @@ The guide lists **Bandit**, **Birdie Try**, and **Ganbare! Marine Kun**. This re
 
 ## Reports and sharing
 
-**Open report** shows a text summary of the most recent install. This report, a JSON version, and reusable download caches are under **%LOCALAPPDATA%\Pocket Guide Installer**. Game files, BIOS downloads, and card data are excluded from the standalone executable and repository.
+**Open report** shows a text summary of the most recent install. This report, a JSON version, and reusable download caches are under **%LOCALAPPDATA%\Pocket Guide Installer** on Windows, **~/Library/Application Support/Pocket Guide Installer** on macOS, or **~/.local/share/pocket-guide-installer** on Linux (respecting XDG_DATA_HOME). Game files, BIOS downloads, and card data are excluded from the standalone executable and repository.
 
-People with repository access can use the private release link. You can also share the executable directly. This is an unsigned Windows desktop app.
+People with repository access can use the private release link. You can also share the executable directly. Windows builds are unsigned. Mac builds are ad-hoc signed and are not Apple-notarized.
 
 ## Build from source on Windows
 
@@ -55,3 +55,21 @@ Selecting firmware adds the official firmware file to the card root. Cartridge p
 
 The Firmware only button selects just the firmware update and turns off local game imports.
 
+
+## Platform downloads
+
+| Platform | Download | Install |
+| --- | --- | --- |
+| Windows x64 | EXE | Open the executable |
+| macOS Apple Silicon | arm64 DMG or ZIP | Copy the app to Applications |
+| macOS Intel | x64 DMG or ZIP | Copy the app to Applications |
+| Debian / Ubuntu x64 | DEB | Open with your package manager |
+| Fedora x64 | RPM | Open with your package manager |
+| Arch Linux x64 | pkg.tar.gz | Install with pacman |
+| Linux x64 portable | tar.gz | Extract and run PocketGuideInstaller |
+
+The release workflow builds and checks each platform natively and installs the Linux packages in Debian, Fedora, and Arch containers. Linux portable builds need an X11-compatible desktop and standard X11/font libraries. Intel and Apple Silicon macOS builds are separate. Physical Pocket transfers on macOS and Linux still need user testing.
+
+The workflow supports Python 3.13 and PyInstaller 6.22.3. Build a native release with **python build_release.py 1.2.0** on the corresponding OS. Linux package builds also use FPM. Downloads contain the same checklist and firmware option. Choose the root of the mounted Pocket card when browsing manually.
+
+See the release's **SHA256SUMS** file for each platform's download checksums.

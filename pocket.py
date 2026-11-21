@@ -3,6 +3,7 @@ import concurrent.futures
 import hashlib
 import json
 import os
+import ntpath
 import re
 import shutil
 import sys
@@ -16,6 +17,7 @@ from collections import Counter
 from pathlib import Path
 
 import downloads
+from platform_utils import app_data_dir, is_card_root
 
 STOP = threading.Event()
 
@@ -31,7 +33,7 @@ def checkpoint():
 
 BUNDLE = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 CAT = json.loads((BUNDLE / "manifest.json").read_text("utf-8-sig"))
-CACHE = Path(os.environ["LOCALAPPDATA"]) / "Pocket Guide Installer" / "Downloads"
+CACHE = app_data_dir() / "Downloads"
 ROOTS = {"assets": "Assets", "cores": "Cores", "platforms": "Platforms"}
 EXT = {
     "gb": "gb",
@@ -59,7 +61,7 @@ def clean(name):
         name not in (".", "..", "")
         and not re.search(r'[<>:"/\\|?*\x00-\x1f]', name)
         and not name.endswith((".", " "))
-        and not os.path.isreserved(name)
+        and not ntpath.isreserved(name)
     )
 
 
@@ -369,8 +371,7 @@ def install(
     root = Path(card).absolute()
     overwrite = mode == "overwrite"
     if (
-        root.resolve() == Path(os.environ.get("SystemDrive", "C:") + "/")
-        or root != Path(root.anchor)
+        not is_card_root(root)
         or not (root / "Analogue_Pocket.json").is_file()
         or json.loads((root / "Analogue_Pocket.json").read_text("utf-8-sig")).get(
             "product"
@@ -499,11 +500,18 @@ def install(
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--smoke-test", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--smoke-report", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--card", type=Path)
     parser.add_argument("--games", type=Path)
     parser.add_argument("--firmware", action="store_true")
     parser.add_argument("--mode", choices=["add", "overwrite"], default="add")
     args = parser.parse_args()
+    if args.smoke_test:
+        from smoke_check import run
+
+        run(args.smoke_report)
+        return
     if args.card is None:
         from interface import launch
 

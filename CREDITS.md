@@ -106,6 +106,8 @@ Both installed projects and GitHub references used from the guide are included. 
 | [tcltk/tk](https://github.com/tcltk/tk) | Bundled Tk graphical interface runtime | Unclassified / check upstream |
 | [tsalvo/openfpga-varvara](https://github.com/tsalvo/openfpga-varvara) | Core project, Guide reference, Release downloads | MIT |
 
+Additional platform packaging uses [FPM by Jordan Sissel and contributors](https://github.com/jordansissel/fpm) under its [MIT license](https://github.com/jordansissel/fpm/blob/main/LICENSE). GitHub Actions runs native builds with the [checkout](https://github.com/actions/checkout), [setup-python](https://github.com/actions/setup-python), [upload-artifact](https://github.com/actions/upload-artifact), and [download-artifact](https://github.com/actions/download-artifact) actions.
+
 ## Installed core credits
 
 All core IDs in the release manifest are listed here, with the catalog's source project and the exact downloaded release. The source project's README, contributors, and license files provide the full development and porting history.
