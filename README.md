@@ -2,6 +2,10 @@
 
 A standalone Windows x64 installer for Analogue Pocket openFPGA cores and games, based on the [Time Extension guide](https://www.timeextension.com/guides/all-analogue-pocket-openfpga-cores-and-where-to-download-them).
 
+## Credits
+
+This installer relies on the work of openFPGA developers, port maintainers, and tool authors. The full credits list identifies **89 repositories and every one of the 137 core builds**, including source projects, pinned releases, and GitHub-reported license information. [Read all credits and upstream sources](CREDITS.md).
+
 ## Use the installer
 
 1. Download **PocketGuideInstaller.exe** from [the latest release](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/latest).
@@ -11,7 +15,7 @@ A standalone Windows x64 installer for Analogue Pocket openFPGA cores and games,
 5. Leave **Import compatible games** selected to unpack games already on the card and optionally import a PC game folder. Click **Install selection**. Use **Stop safely** if you need to interrupt the transfer, then wait for the stopped message before ejecting.
 6. Review the completion report and safely eject the card. On Pocket, select **openFPGA** for installed cores or **Play Cartridge** for physical cartridges.
 
-The installer writes only under **Assets**, **Cores**, and **Platforms** on the card. Downloaded core archives are pinned with SHA-256. Game and system assets are checked against their archive checksums. Each new or replacement file is verified before it becomes the destination file.
+Core and game installation writes under **Assets**, **Cores**, and **Platforms**. Selecting firmware also places the official firmware update at the card root. Downloaded core archives are pinned with SHA-256. Game and system assets are checked against their archive checksums. Each new or replacement file is verified before it becomes the destination file.
 
 ## What is included
 
