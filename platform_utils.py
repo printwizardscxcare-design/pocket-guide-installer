@@ -36,7 +36,7 @@ def detected_cards():
     candidates = []
     if sys.platform == "win32":
         mask = ctypes.windll.kernel32.GetLogicalDrives()
-        candidates = [Path(chr(65 + i) + ":/") for i in range(26) if mask & (1 << i)]
+        candidates = [Path(chr(65+i)+":/") for i in range(26) if mask&(1<<i) and ctypes.windll.kernel32.GetDriveTypeW(chr(65+i)+":/") in (2,3)]
     else:
         parents = (
             [Path("/Volumes")]

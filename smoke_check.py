@@ -89,9 +89,10 @@ def run(report=None):
         assert "skipped" in engine.prepare_firmware(card, False)
         root = tk.Tk()
         root.withdraw()
-        app = interface.Installer(
-            root, engine.CAT, engine.install, engine.STOP, cache.parent
-        )
+        with patch.object(interface, "detected_cards", lambda: []):
+            app = interface.Installer(
+                root, engine.CAT, engine.install, engine.STOP, cache.parent
+            )
         app.firmware_only()
         assert app.model.selected == {"firmware"} and not app.import_games.get()
         app.search.set("SNES")
