@@ -1,3 +1,9 @@
+This update fixes four legacy Genesis imports and clarifies missing-content reports.
+
+- Recognizes raw Genesis dumps mislabeled as SMD, including early games without the usual SEGA header, after checking reset vectors and image layout. Original files stay untouched.
+- Replaces generic Neo Geo component names and PC Engine CD example tracks with clear game-data requirements.
+- Names Coin-Op Collection beta access separately from game content.
+
 Game installation now has live progress and a persistent activity history.
 
 - See the current stage, files finished, percentage and elapsed time.
@@ -10,7 +16,7 @@ Game installation now has live progress and a persistent activity history.
 
 The Pocket Guide logo now uses an 8-bit Gruvbox design across the executable, Mac app, Linux packages, and project page.
 
-Pocket Guide Installer 1.3.0 supports Windows, Intel and Apple Silicon macOS, and Linux. It includes the selective core and game checklist, Add and Overwrite modes, and a firmware-only option.
+Pocket Guide Installer 1.3.1 supports Windows, Intel and Apple Silicon macOS, and Linux. It includes the selective core and game checklist, Add and Overwrite modes, and a firmware-only option.
 
 ## Start here
 

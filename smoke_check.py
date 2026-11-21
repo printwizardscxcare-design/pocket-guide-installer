@@ -98,6 +98,40 @@ def run(report=None):
         assert engine.write_verified(dest, b"two", True) == "written"
         assert dest.read_bytes() == b"two"
         assert "skipped" in engine.prepare_firmware(card, False)
+        # Raw dumps with legacy SMD extensions can lack Sega's standard header.
+        raw = bytearray(16384)
+        raw[4:8] = (512).to_bytes(4, "big")
+        for stack in (0xFFFFFE, 0xFFFEFE, 0x1000000, 0xFFFFFFF8):
+            raw[:4] = stack.to_bytes(4, "big")
+            assert engine.decode_smd(bytes(raw)) == bytes(raw)
+        raw[256:260] = b"SEGA"
+        smd = bytes(512) + bytes(raw[1::2]) + bytes(raw[0::2])
+        assert engine.decode_smd(smd) == bytes(raw)
+        try:
+            engine.decode_smd(b"invalid image")
+            raise AssertionError("Invalid SMD was accepted")
+        except ValueError:
+            pass
+        with patch.object(
+            engine,
+            "CAT",
+            {
+                "asset_gaps": [
+                    "Assets/ng/common/crom0",
+                    "Assets/pcecd/common/image.cue",
+                    "Assets/pcecd/common/image (Track 01).bin",
+                ]
+            },
+        ):
+            requirements = engine.content_requirements(card, {"ng", "pcecd"})
+            assert len(requirements) == 2 and "examples" in requirements[1]
+            ng_game = card / "Assets/ng/common/fixture/crom0"
+            ng_game.parent.mkdir(parents=True)
+            ng_game.write_bytes(b"game")
+            cd_game = card / "Assets/pcecd/common/fixture/game.CUE"
+            cd_game.parent.mkdir(parents=True)
+            cd_game.write_text('FILE "game.bin" BINARY')
+            assert not engine.content_requirements(card, {"ng", "pcecd"})
         # Chunked transfers report live bytes, cached files, write results and failures.
         import downloads
 

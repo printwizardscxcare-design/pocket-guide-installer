@@ -9,7 +9,7 @@ import subprocess
 import sys
 import tarfile
 
-version = sys.argv[1].removeprefix("v") if len(sys.argv) > 1 else "1.3.0"
+version = sys.argv[1].removeprefix("v") if len(sys.argv) > 1 else "1.3.1"
 arch = "arm64" if platform.machine().lower() in ("arm64", "aarch64") else "x64"
 target = (
     "windows"

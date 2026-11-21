@@ -4,7 +4,7 @@
 
 Set up your Analogue Pocket from Windows, macOS, or Linux. Choose the openFPGA cores and game assets you want, import your existing games, or prepare an official firmware update from one checklist.
 
-[Download version 1.3.0](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/tag/v1.3.0) · [Installation guide](INSTALL.md) · [Full credits](CREDITS.md) · [Get help](https://github.com/printwizardscxcare-design/pocket-guide-installer/issues)
+[Download version 1.3.1](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/tag/v1.3.1) · [Installation guide](INSTALL.md) · [Full credits](CREDITS.md) · [Get help](https://github.com/printwizardscxcare-design/pocket-guide-installer/issues)
 
 ## What it does
 
@@ -23,15 +23,15 @@ Your physical cartridges still work through **Play Cartridge**. Core and game fi
 
 Choose the package that matches your computer. The linked instructions cover installation and first launch for each format.
 
-| Platform | Version 1.3.0 download | Instructions |
+| Platform | Version 1.3.1 download | Instructions |
 | --- | --- | --- |
-| Windows x64 | [EXE](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.0/PocketGuideInstaller-1.3.0-windows-x64.exe) | [Windows setup](INSTALL.md#windows) |
-| macOS Apple Silicon | [DMG](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.0/PocketGuideInstaller-1.3.0-macos-arm64.dmg) · [ZIP](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.0/PocketGuideInstaller-1.3.0-macos-arm64.zip) | [Mac setup](INSTALL.md#macos) |
-| macOS Intel | [DMG](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.0/PocketGuideInstaller-1.3.0-macos-x64.dmg) · [ZIP](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.0/PocketGuideInstaller-1.3.0-macos-x64.zip) | [Mac setup](INSTALL.md#macos) |
-| Debian / Ubuntu x64 | [DEB](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.0/PocketGuideInstaller-1.3.0-linux-x64.deb) | [Debian / Ubuntu setup](INSTALL.md#debian-and-ubuntu) |
-| Fedora x64 | [RPM](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.0/PocketGuideInstaller-1.3.0-linux-x64.rpm) | [Fedora setup](INSTALL.md#fedora) |
-| Arch Linux x64 | [pkg.tar.gz](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.0/PocketGuideInstaller-1.3.0-linux-x64.pkg.tar.gz) | [Arch setup](INSTALL.md#arch-linux) |
-| Linux x64 portable | [tar.gz](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.0/PocketGuideInstaller-1.3.0-linux-x64.tar.gz) | [Portable Linux setup](INSTALL.md#portable-linux-download) |
+| Windows x64 | [EXE](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.1/PocketGuideInstaller-1.3.1-windows-x64.exe) | [Windows setup](INSTALL.md#windows) |
+| macOS Apple Silicon | [DMG](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.1/PocketGuideInstaller-1.3.1-macos-arm64.dmg) · [ZIP](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.1/PocketGuideInstaller-1.3.1-macos-arm64.zip) | [Mac setup](INSTALL.md#macos) |
+| macOS Intel | [DMG](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.1/PocketGuideInstaller-1.3.1-macos-x64.dmg) · [ZIP](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.1/PocketGuideInstaller-1.3.1-macos-x64.zip) | [Mac setup](INSTALL.md#macos) |
+| Debian / Ubuntu x64 | [DEB](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.1/PocketGuideInstaller-1.3.1-linux-x64.deb) | [Debian / Ubuntu setup](INSTALL.md#debian-and-ubuntu) |
+| Fedora x64 | [RPM](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.1/PocketGuideInstaller-1.3.1-linux-x64.rpm) | [Fedora setup](INSTALL.md#fedora) |
+| Arch Linux x64 | [pkg.tar.gz](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.1/PocketGuideInstaller-1.3.1-linux-x64.pkg.tar.gz) | [Arch setup](INSTALL.md#arch-linux) |
+| Linux x64 portable | [tar.gz](https://github.com/printwizardscxcare-design/pocket-guide-installer/releases/download/v1.3.1/PocketGuideInstaller-1.3.1-linux-x64.tar.gz) | [Portable Linux setup](INSTALL.md#portable-linux-download) |
 
 Windows builds are unsigned. Mac builds use ad-hoc signing and have not been notarized by Apple. The installation guide explains first-launch prompts. Checksums for every package are on the release page.
 
@@ -85,7 +85,7 @@ Native builds use Python 3.13, PyInstaller 6.22.3, and Pillow 12.0.0. Linux pack
 
 ```bash
 python -m pip install pyinstaller==6.22.3 pillow==12.0.0
-python build_release.py 1.3.0
+python build_release.py 1.3.1
 ```
 
 Build on the target operating system. The workflow creates Intel and Apple Silicon Mac releases separately. Build outputs and checksums are written to **release/**. [Native build and distribution checks](.github/workflows/desktop.yml)

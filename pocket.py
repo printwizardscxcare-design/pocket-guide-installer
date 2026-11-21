@@ -199,6 +199,60 @@ def install_core(root, key, archive, overwrite, report):
                 report.append("Kept existing file: " + str(path))
 
 
+def decode_smd(data):
+    """Decode copier blocks, or preserve an already raw cartridge image."""
+    if data[256:260] == b"SEGA":
+        return data
+    # Some old sets label raw dumps as SMD. Early/unlicensed games need not
+    # have a SEGA header; validate their 68000 reset vectors instead.
+    if len(data) >= 16384 and len(data) % 16384 == 0:
+        stack = int.from_bytes(data[:4], "big")
+        entry = int.from_bytes(data[4:8], "big")
+        valid_stack = stack == 0x1000000 or (
+            stack >> 24 in (0, 255) and 0xFF0000 <= (stack & 0xFFFFFF) <= 0xFFFFFF
+        )
+        if valid_stack and 8 <= entry < len(data) and entry % 2 == 0:
+            return data
+    body = data[512:]
+    if not body or len(body) % 16384:
+        raise ValueError("Unsupported SMD layout")
+    decoded = bytearray(len(body))
+    for off in range(0, len(body), 16384):
+        decoded[off : off + 16384 : 2] = body[off + 8192 : off + 16384]
+        decoded[off + 1 : off + 16384 : 2] = body[off : off + 8192]
+    if decoded[256:260] != b"SEGA":
+        raise ValueError("Unrecognized SMD cartridge header")
+    return bytes(decoded)
+
+
+def content_requirements(root, platforms):
+    """Separate missing game content from generic example slot filenames."""
+    missing = []
+    for name in CAT.get("asset_gaps", []):
+        platform = name.split("/")[1].lower()
+        if platform not in platforms or platform in {"ng", "pcecd"}:
+            continue
+        if not output_path(root, name.split("/")).is_file():
+            missing.append("Additional game or system file: " + name)
+    if "ng" in platforms:
+        common = root / "Assets" / "ng" / "common"
+        if not common.exists() or not any(
+            p.name == "crom0" for p in common.rglob("crom0") if p.is_file()
+        ):
+            missing.append(
+                "Neo Geo: no compatible game data was found. Games need their own folders under Assets/ng/common; BIOS/support files alone do not include games, and generic crom0/prom names are not standalone downloads."
+            )
+    if "pcecd" in platforms:
+        common = root / "Assets" / "pcecd" / "common"
+        if not common.exists() or not any(
+            p.suffix.lower() == ".cue" for p in common.rglob("*") if p.is_file()
+        ):
+            missing.append(
+                "PC Engine CD: no game CUE/BIN image was found under Assets/pcecd/common. The image.cue and 30 track names in image_template.json are examples, not 31 failed downloads."
+            )
+    return missing
+
+
 def games(root, extra, report, overwrite, platforms, progress=None):
     assets = root / "Assets"
     sources = [assets] + (
@@ -263,21 +317,7 @@ def games(root, extra, report, overwrite, platforms, progress=None):
                     if platform not in platforms:
                         return
                     if ext == "smd":
-                        if data[256:260] != b"SEGA":
-                            body = data[512:]
-                            if len(body) % 16384 or not body:
-                                raise ValueError("Unsupported SMD layout")
-                            decoded = bytearray(len(body))
-                            for off in range(0, len(body), 16384):
-                                decoded[off : off + 16384 : 2] = body[
-                                    off + 8192 : off + 16384
-                                ]
-                                decoded[off + 1 : off + 16384 : 2] = body[
-                                    off : off + 8192
-                                ]
-                            if decoded[256:260] != b"SEGA":
-                                raise ValueError("Unrecognized SMD cartridge header")
-                            data = bytes(decoded)
+                        data = decode_smd(data)
                         filename = Path(filename).stem + ".md"
                     if ext == "gen":
                         filename = Path(filename).stem + ".md"
@@ -584,13 +624,12 @@ def install(
     )
     report.extend(issues)
     for core in set(CAT["licenses"]).intersection(installed):
-        report.append("Publisher license required to play: " + core)
+        report.append(
+            "Coin-Op Collection beta access/key may be required for this core build: "
+            + core
+        )
     platforms = {p.lower() for i in installed for p in CAT["core_info"][i]["platforms"]}
-    for name in CAT.get("asset_gaps", []):
-        if name.split("/")[1].lower() not in platforms:
-            continue
-        if not output_path(root, name.split("/")).is_file():
-            report.append("Additional game or system file: " + name)
+    report.extend(content_requirements(root, platforms))
     checkpoint()
     print("Installing games...", flush=True)
     if import_games:
