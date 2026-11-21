@@ -47,7 +47,26 @@ if target == "macos":
     ]
 else:
     command += ["--onefile", "--icon", "assets/pocket.ico"]
-subprocess.run(command + ["pocket.py"], check=True)
+if target == "linux":
+    # Use the distribution's font libraries with its own font configuration.
+    # Bundling the older build host's fontconfig breaks current Arch configs.
+    makespec = [shutil.which("pyi-makespec")] + [
+        arg for arg in command[3:] if arg not in ("--noconfirm", "--clean")
+    ]
+    subprocess.run(makespec + ["pocket.py"], check=True)
+    spec = Path("PocketGuideInstaller.spec")
+    text = spec.read_text()
+    text = text.replace(
+        "pyz = PYZ",
+        'a.binaries = [entry for entry in a.binaries if not entry[0].startswith(("libfontconfig.so", "libfreetype.so"))]\npyz = PYZ',
+    )
+    spec.write_text(text)
+    subprocess.run(
+        [sys.executable, "-m", "PyInstaller", "--clean", "--noconfirm", str(spec)],
+        check=True,
+    )
+else:
+    subprocess.run(command + ["pocket.py"], check=True)
 if target == "windows":
     binary = Path("dist/PocketGuideInstaller.exe")
 elif target == "macos":
@@ -149,6 +168,7 @@ else:
             cmd[1:1] = ["--pacman-compression", "gz"]
         dependencies = {
             "deb": [
+                "fonts-dejavu-core",
                 "libx11-6",
                 "libxext6",
                 "libxrender1",
@@ -158,6 +178,7 @@ else:
                 "xdg-utils",
             ],
             "rpm": [
+                "dejavu-sans-fonts",
                 "libX11",
                 "libXext",
                 "libXrender",
@@ -167,6 +188,7 @@ else:
                 "xdg-utils",
             ],
             "pacman": [
+                "ttf-dejavu",
                 "libx11",
                 "libxext",
                 "libxrender",
