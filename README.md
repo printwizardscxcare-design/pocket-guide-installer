@@ -39,3 +39,12 @@ python -m PyInstaller --onefile --windowed --name PocketGuideInstaller --add-dat
 The output is **dist/PocketGuideInstaller.exe**. For a full selection from the command line, run **python pocket.py --card E:/ --mode add**. Optional arguments include **--mode overwrite** and **--games "C:/My Games"**. Use the actual card drive.
 
 Core metadata comes from the [openFPGA core inventory](https://openfpga-cores-inventory.github.io/analogue-pocket/) and [JT binary releases](https://github.com/jotego/jtbin). The game and system asset index uses the openFPGA-Files archive referenced by [Pupdate](https://github.com/mattpannella/pupdate).
+
+## Optional firmware update
+
+Firmware 2.7 is available in the checklist and starts selected. It requires confirmation. Cores, downloads, and local game imports run first. Firmware preparation runs last. The installer verifies the official checksum and skips preparation when the device reports 2.7 or newer. Overwrite mode backs up older Pocket update files to the PC.
+
+After completion, safely eject, fully power off the Pocket, then power on with the card inserted. Allow 3-4 minutes and keep power on until it restarts. Choose None, then check Pocket firmware for firmware alone. Command-line runs require --firmware to include firmware.
+
+Selecting firmware adds the official firmware file to the card root. Cartridge play remains available. Official instructions https://www.analogue.co/support/resource/updating-firmware
+

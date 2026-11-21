@@ -41,6 +41,11 @@ class Checklist:
                 info["name"],
                 path.split("/")[1] + " / " + path.split("/")[-1],
             )
+        self.items["firmware"] = (
+            "Pocket firmware",
+            "Official firmware 2.7",
+            "Apply on next full power-on",
+        )
         self.selected = set(self.items)
 
     def change(self, keys, on):
@@ -248,7 +253,7 @@ class Installer:
         )
         tk.Label(
             right,
-            text="Both modes preserve cartridge play, firmware, saves, and Memories.",
+            text="Cartridge play, saves, and Memories are preserved. Firmware updates apply on the Pocket after a full power-on.",
             wraplength=238,
             justify="left",
             anchor="w",
@@ -406,13 +411,19 @@ class Installer:
             return
         cores = self.model.selected.intersection(self.cat["packages"])
         assets = self.model.selected.intersection(self.cat["assets"])
-        if not cores:
+        firmware = "firmware" in self.model.selected
+        if not cores and not firmware:
             messagebox.showinfo(
-                "Choose a core", "Select at least one core or game download."
+                "Choose an item", "Select a core, game download, or firmware."
             )
             return
         if self.mode.get() == "overwrite" and not messagebox.askokcancel(
             "Overwrite matching files", f"Replace selected files that differ on {card}?"
+        ):
+            return
+        if firmware and not messagebox.askokcancel(
+            "Prepare Pocket firmware 2.7",
+            "Download and verify official firmware 2.7 on the card? The Pocket will apply it after a full power-off and power-on. Allow 3–4 minutes and keep power on until it restarts. Older update files are backed up to this PC when Overwrite is selected.",
         ):
             return
         folder = (
@@ -420,7 +431,15 @@ class Installer:
             if self.folder.get() and self.import_games.get()
             else None
         )
-        args = (card, folder, self.mode.get(), cores, assets, self.import_games.get())
+        args = (
+            card,
+            folder,
+            self.mode.get(),
+            cores,
+            assets,
+            self.import_games.get(),
+            firmware,
+        )
         self.running = True
         self.stop.clear()
         self.action.configure(text="Stop safely")
@@ -485,6 +504,11 @@ class Installer:
                 self.action.configure(text="Install selection", state="normal")
                 if kind == "done":
                     self.progress.configure(value=self.progress["maximum"])
+                    if (
+                        value.get("firmware")
+                        and "not selected" not in value["firmware"]
+                    ):
+                        messagebox.showinfo("Pocket firmware", value["firmware"])
                     self.report_button.pack(side="right", padx=8)
                     self.status.set(
                         f"Finished. {len(value['processed_cores'])} cores processed, {value['verified_game_and_system_assets']} assets verified, {value['game_files'].get('written', 0)} local game files written. See report for exceptions."

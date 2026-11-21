@@ -304,7 +304,68 @@ def games(root, extra, report, overwrite, platforms):
     return dict(counts)
 
 
-def install(card, game_folder, mode, core_ids, asset_ids, import_games=True):
+def prepare_firmware(root, overwrite):
+    version = "2.7"
+    name = "pocket_firmware_2_7.bin"
+    expected = "ac5848b97fa8272b2257a45d9c41dbe6"
+    current = (
+        json.loads((root / "Analogue_Pocket.json").read_text("utf-8-sig"))
+        .get("firmware", {})
+        .get("runtime", {})
+        .get("name", "")
+    )
+    try:
+        if tuple(map(int, current.split("."))) >= tuple(map(int, version.split("."))):
+            return f"Pocket reports firmware {current}. Update file skipped."
+    except ValueError:
+        pass
+    destination = root / name
+    other = [
+        f
+        for f in root.iterdir()
+        if f.is_file()
+        and f.suffix.lower() == ".bin"
+        and f.name.lower().startswith("pocket_firmware")
+        and f.name.lower() != name
+    ]
+    if other and not overwrite:
+        return "Firmware skipped. Other Pocket firmware files are on the card. Use Overwrite matching files to back them up and replace them."
+    print("Preparing Pocket firmware 2.7…", flush=True)
+    cache = CACHE.parent / "Firmware"
+    cache.mkdir(exist_ok=True)
+    local = cache / name
+    if not local.is_file() or hashlib.md5(local.read_bytes()).hexdigest() != expected:
+        with urllib.request.urlopen(
+            "https://www.analogue.co/support/pocket/firmware/2.7/download", timeout=60
+        ) as response:
+            data = response.read()
+        if len(data) != 54525952 or hashlib.md5(data).hexdigest() != expected:
+            raise ValueError("Pocket firmware checksum mismatch")
+        write_verified(local, data, True)
+    data = local.read_bytes()
+    if hashlib.md5(data).hexdigest() != expected:
+        raise ValueError("Pocket firmware checksum mismatch")
+    checkpoint()
+    # Keep a verified PC backup before removing an older update from the SD root.
+    for old in other:
+        backup = (
+            cache
+            / "Previous updates"
+            / (hashlib.sha256(old.read_bytes()).hexdigest() + "-" + old.name)
+        )
+        write_verified(backup, old.read_bytes(), False)
+    state = write_verified(destination, data, overwrite)
+    if state == "conflict":
+        return "Firmware skipped. Existing firmware file differs. Select Overwrite matching files to replace it."
+    for old in other:
+        checkpoint()
+        old.unlink()
+    return "Firmware 2.7 is ready on the card. Safely eject, fully power off the Pocket, then power on with the card inserted. Allow 3–4 minutes and keep power on until the Pocket restarts."
+
+
+def install(
+    card, game_folder, mode, core_ids, asset_ids, import_games=True, firmware=False
+):
     root = Path(card).absolute()
     overwrite = mode == "overwrite"
     if (
@@ -382,7 +443,15 @@ def install(card, game_folder, mode, core_ids, asset_ids, import_games=True):
         ):
             report.append("Guide entry needs attention: " + r["title"])
     checkpoint()
+    firmware_status = "Firmware update was not selected."
+    if firmware:
+        try:
+            firmware_status = prepare_firmware(root, overwrite)
+        except Exception as exc:
+            firmware_status = "Firmware preparation failed: " + str(exc)
+            report.append(firmware_status)
     result = {
+        "firmware": firmware_status,
         "unavailable_guide_games": CAT["unavailable_games"],
         "card": str(root),
         "mode": mode,
@@ -400,6 +469,8 @@ def install(card, game_folder, mode, core_ids, asset_ids, import_games=True):
         f"{len(installed)} of {len(core_ids)} selected cores processed",
         f"{asset_count} of {len(asset_ids)} selected game and system files verified",
         f"{counts.get('written', 0)} local game files written; {counts.get('present', 0)} already matched",
+        "",
+        firmware_status,
         "",
         "Items to review",
         *(report or ["None"]),
@@ -430,6 +501,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--card", type=Path)
     parser.add_argument("--games", type=Path)
+    parser.add_argument("--firmware", action="store_true")
     parser.add_argument("--mode", choices=["add", "overwrite"], default="add")
     args = parser.parse_args()
     if args.card is None:
@@ -438,7 +510,13 @@ def main():
         launch(CAT, install, STOP, CACHE.parent)
     else:
         install(
-            args.card, args.games, args.mode, set(CAT["packages"]), set(CAT["assets"])
+            args.card,
+            args.games,
+            args.mode,
+            set(CAT["packages"]),
+            set(CAT["assets"]),
+            True,
+            args.firmware,
         )
 
 
