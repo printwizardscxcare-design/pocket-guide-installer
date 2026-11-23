@@ -42,7 +42,8 @@ class Checklist:
         for key, info in catalog["core_info"].items():
             self.items[key] = (
                 categories.get(info["category"], "Other cores"),
-                info["name"],
+                info["name"]
+                + (" · game data needed" if key == "Mazamars312.NeoGeo" else ""),
                 key + (" · license required" if key in catalog["licenses"] else ""),
             )
         for path, info in catalog["asset_info"].items():

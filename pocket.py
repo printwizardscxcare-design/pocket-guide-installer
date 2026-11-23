@@ -17,6 +17,7 @@ from collections import Counter
 from pathlib import Path
 
 import downloads
+import neogeo
 from platform_utils import app_data_dir, is_card_root
 
 STOP = threading.Event()
@@ -235,10 +236,12 @@ def content_requirements(root, platforms):
         if not output_path(root, name.split("/")).is_file():
             missing.append("Additional game or system file: " + name)
     if "ng" in platforms:
-        common = root / "Assets" / "ng" / "common"
-        if not common.exists() or not any(
-            p.name == "crom0" for p in common.rglob("crom0") if p.is_file()
-        ):
+        readiness = neogeo.summary(neogeo.requirements(root))
+        if readiness["unavailable"]:
+            missing.append(
+                f"Neo Geo: {readiness['ready']} game definitions have all required files; {readiness['unavailable']} definitions are missing game data or need review. Menu entries are launch presets, not installed games. Import compatible per-game folders containing srom, prom, crom0, m1rom and vroma0. A BIOS or a renamed sfix.sfix cannot replace a game's srom."
+            )
+        elif not readiness["games"]:
             missing.append(
                 "Neo Geo: no compatible game data was found. Games need their own folders under Assets/ng/common; BIOS/support files alone do not include games, and generic crom0/prom names are not standalone downloads."
             )
@@ -259,6 +262,7 @@ def games(root, extra, report, overwrite, platforms, progress=None):
         [extra] if extra and extra.resolve() != assets.resolve() else []
     )
     counts = Counter()
+    neo_targets = neogeo.import_targets(root) if "ng" in platforms else {}
     sources_and_paths = []
     for source in sources:
         on_card = source == assets
@@ -268,6 +272,10 @@ def games(root, extra, report, overwrite, platforms, progress=None):
             if p.is_file()
             and (
                 p.suffix.lower() == ".zip"
+                or (
+                    neogeo.import_target(neo_targets, p.name, p)
+                    and (not on_card or not p.is_relative_to(assets / "ng" / "common"))
+                )
                 or (
                     p.suffix.lower()[1:] in EXT
                     or (
@@ -308,7 +316,10 @@ def games(root, extra, report, overwrite, platforms, progress=None):
                 def place(name, data):
                     filename = Path(name.replace("\\", "/")).name
                     ext = Path(filename).suffix[1:].lower()
-                    if ext == "bin" and "genesis" in [x.lower() for x in path.parts]:
+                    neo_destination = neogeo.import_target(neo_targets, name, path)
+                    if neo_destination:
+                        platform = "ng"
+                    elif ext == "bin" and "genesis" in [x.lower() for x in path.parts]:
                         platform = "genesis"
                     elif ext in EXT:
                         platform = EXT[ext]
@@ -334,7 +345,9 @@ def games(root, extra, report, overwrite, platforms, progress=None):
                     else:
                         sub = ["Imported"] + list(path.relative_to(source).parts[:-1])
                     dest = output_path(
-                        root, ["Assets", platform, "common"] + sub + [filename]
+                        root,
+                        neo_destination
+                        or ["Assets", platform, "common"] + sub + [filename],
                     )
                     if progress:
                         progress(
@@ -360,7 +373,12 @@ def games(root, extra, report, overwrite, platforms, progress=None):
                                     part.startswith((".", "__MACOSX"))
                                     for part in f.filename.split("/")
                                 )
-                                and Path(f.filename).suffix[1:].lower() in EXT
+                                and (
+                                    Path(f.filename).suffix[1:].lower() in EXT
+                                    or neogeo.import_target(
+                                        neo_targets, f.filename, path
+                                    )
+                                )
                                 and f.file_size <= 128 * 1024 * 1024
                             ):
                                 place(f.filename, z.read(f))
@@ -629,7 +647,6 @@ def install(
             + core
         )
     platforms = {p.lower() for i in installed for p in CAT["core_info"][i]["platforms"]}
-    report.extend(content_requirements(root, platforms))
     checkpoint()
     print("Installing games...", flush=True)
     if import_games:
@@ -639,6 +656,8 @@ def install(
         if import_games
         else {}
     )
+    # Audit after imports so newly supplied game packs are evaluated too.
+    report.extend(content_requirements(root, platforms))
     for r in CAT["rows"]:
         if set(r["cores"]).intersection(core_ids) and not set(r["cores"]).intersection(
             installed
@@ -684,6 +703,9 @@ def install(
         "game_files": counts,
         "needs_attention": report,
         "activity": activity,
+        "neo_geo": neogeo.summary(neogeo.requirements(root))
+        if "ng" in platforms
+        else None,
     }
     out = CACHE.parent / "Last install.json"
     out.write_text(json.dumps(result, indent=2), encoding="utf8")

@@ -128,10 +128,84 @@ def run(report=None):
             ng_game = card / "Assets/ng/common/fixture/crom0"
             ng_game.parent.mkdir(parents=True)
             ng_game.write_bytes(b"game")
+            ng_definition = card / "Assets/ng/Mazamars312.NeoGeo/Fixture.json"
+            ng_definition.parent.mkdir(parents=True)
+            ng_definition.write_text(
+                json.dumps(
+                    {
+                        "instance": {
+                            "data_path": "fixture",
+                            "data_slots": [
+                                {"id": 3, "filename": "srom"},
+                                {"id": 5, "filename": "crom0"},
+                            ],
+                        }
+                    }
+                )
+            )
+            assert any(
+                "missing game data" in line
+                for line in engine.content_requirements(card, {"ng"})
+            )
+            (ng_game.parent / "srom").write_bytes(b"game srom")
             cd_game = card / "Assets/pcecd/common/fixture/game.CUE"
             cd_game.parent.mkdir(parents=True)
             cd_game.write_text('FILE "game.bin" BINARY')
             assert not engine.content_requirements(card, {"ng", "pcecd"})
+        # The video's SROM error: a menu definition without its game data is not ready.
+        import neogeo
+
+        neo_card = base / "neo-card"
+        launch = neo_card / "Assets/ng/Mazamars312.NeoGeo/Galaxy Fight.json"
+        launch.parent.mkdir(parents=True)
+        components = ["srom", "prom", "crom0", "m1rom", "vroma0"]
+        launch.write_text(
+            json.dumps(
+                {
+                    "instance": {
+                        "data_path": "galaxyfg",
+                        "data_slots": [
+                            {"id": i + 3, "filename": name}
+                            for i, name in enumerate(components)
+                        ],
+                    }
+                }
+            )
+        )
+        assert neogeo.summary(neogeo.requirements(neo_card))["ready"] == 0
+        assert "galaxyfg/srom" in neogeo.requirements(neo_card)[0]["missing"]
+        neo_source = base / "neo-import"
+        pack = neo_source / "galaxyfg"
+        pack.mkdir(parents=True)
+        for component in components:
+            (pack / component).write_bytes(("fixture " + component).encode())
+        neo_issues = []
+        result = engine.games(neo_card, neo_source, neo_issues, False, {"ng"})
+        assert result["written"] == 5 and not neo_issues
+        assert neogeo.summary(neogeo.requirements(neo_card))["ready"] == 1
+        for component in components:
+            assert (
+                neo_card / "Assets/ng/common/galaxyfg" / component
+            ).read_bytes() == (pack / component).read_bytes()
+        zip_source = base / "neo-zips"
+        zip_source.mkdir()
+        with zipfile.ZipFile(zip_source / "galaxyfg.zip", "w") as archive:
+            for component in components:
+                archive.writestr(component, (pack / component).read_bytes())
+        result = engine.games(neo_card, zip_source, neo_issues, False, {"ng"})
+        assert result.get("written", 0) == 0 and result["present"] == 5
+        unsafe = launch.parent / "Unsafe.json"
+        unsafe.write_text(
+            json.dumps(
+                {
+                    "instance": {
+                        "data_path": "../outside",
+                        "data_slots": [{"filename": "srom"}],
+                    }
+                }
+            )
+        )
+        assert not any(key[0] == "outside" for key in neogeo.import_targets(neo_card))
         # Chunked transfers report live bytes, cached files, write results and failures.
         import downloads
 
